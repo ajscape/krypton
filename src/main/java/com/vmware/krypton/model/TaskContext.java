@@ -21,10 +21,10 @@ public class TaskContext<I,O> {
     }
 
     public void emitOutput(String outputTaskId, O output) {
-        taskManager.sendTaskOutput(taskDescription.getTaskId(), outputTaskId, output);
+        taskManager.sendTaskOutput(taskDescription.getTaskId(), outputTaskId, output).join();
     }
 
     public void updateTaskState(TaskState taskState) {
-        taskManager.updateTaskState(taskDescription.getTaskId(), taskState);
+        taskManager.updateTaskState(taskDescription.getTaskId(), taskState).join();
     }
 }
