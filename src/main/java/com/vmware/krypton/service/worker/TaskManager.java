@@ -1,5 +1,6 @@
 package com.vmware.krypton.service.worker;
 
+import com.vmware.xenon.common.ServiceHost;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -20,4 +21,6 @@ public interface TaskManager {
     CompletableFuture<Map<String, TaskState>> getAllTasksStates();
 
     CompletableFuture<Void> updateTaskState(String taskId, TaskState taskState);
+
+    ServiceHost getHost();
 }
