@@ -8,9 +8,9 @@ import com.vmware.xenon.common.ServiceHost;
 /**
  * Created by nibunangs on 23-Nov-2017.
  */
-public class Util {
+public class XenonUtil {
 
-    public int getNumberOfNodes() {
+    public static int getNumberOfNodes() {
         //TODO Implement....
         return 3;
     }
