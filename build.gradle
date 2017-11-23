@@ -22,6 +22,19 @@ buildscript {
 
 repositories {
     mavenLocal()
+    maven { url "http://build-squid.eng.vmware.com/nexus/content/groups/repo" }
+    maven { url "http://build-maven-repo.eng.vmware.com:8081/nexus/content/groups/repo" }
+    maven { url "http://blr-dev-repo.eng.vmware.com:8081/nexus/content/repositories/thirdparty" }
+    maven { url "https://plugins.gradle.org/m2/" }
+    maven { url "https://build-artifactory.eng.vmware.com/artifactory/vrb-snapshot" }
+    maven { url "https://build-artifactory.eng.vmware.com/artifactory/vrbc-commons-release" }
+    maven { url "https://build-artifactory.eng.vmware.com/artifactory/vrbc-commons-snapshot" }
+    maven { url "https://build-artifactory.eng.vmware.com/artifactory/vrbc-benchmark-release" }
+    maven { url "https://build-artifactory.eng.vmware.com/artifactory/vrbc-cost-analysis-release" }
+    maven { url "https://build-artifactory.eng.vmware.com/artifactory/vrbc-collector-release" }
+    maven { url "https://build-artifactory.eng.vmware.com/artifactory/osvc-release-local/" }
+    maven { url "https://build-artifactory.eng.vmware.com/artifactory/symphony-maven-local/" }
+    maven { url "https://build-artifactory.eng.vmware.com/artifactory/vrbc-onboarding-release"}
     mavenCentral()
 }
 
@@ -40,5 +53,6 @@ dependencies {
     compile group: 'com.vmware.xenon', name: 'xenon-slf4j', version: '1.3.5'
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
     compile group: 'org.projectlombok',	name: 'lombok', version: '1.16.16'
+    compile(group: 'com.vmware.vrbc.commons', name: 'javaee-adapter', version: '1.8.419')
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
