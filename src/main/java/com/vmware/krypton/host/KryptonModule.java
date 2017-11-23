@@ -1,10 +1,7 @@
 package com.vmware.krypton.host;
 
 import com.google.inject.AbstractModule;
-import com.vmware.krypton.service.master.JobManager;
-import com.vmware.krypton.service.master.JobManagerImpl;
-import com.vmware.krypton.service.master.JobToTaskGraphTransformer;
-import com.vmware.krypton.service.master.JobToTaskGraphTransformerImpl;
+import com.vmware.krypton.service.master.*;
 import com.vmware.krypton.service.worker.TaskExecutor;
 import com.vmware.krypton.service.worker.TaskExecutorImpl;
 import com.vmware.krypton.service.worker.TaskManager;
@@ -20,6 +17,7 @@ public class KryptonModule extends AbstractModule {
         bind(JobToTaskGraphTransformer.class).to(JobToTaskGraphTransformerImpl.class);
         bind(TaskExecutor.class).to(TaskExecutorImpl.class);
         bind(TaskManager.class).to(TaskManager.class);
+        bind(WorkerTaskScheduleGenerator.class).to(WorkerTaskScheduleGeneratorImpl.class);
     }
 }
 

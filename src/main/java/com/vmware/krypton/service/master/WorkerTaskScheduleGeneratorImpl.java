@@ -4,7 +4,9 @@ import com.vmware.krypton.model.TaskDescription;
 import com.vmware.krypton.model.TaskGraph;
 import com.vmware.krypton.model.WorkerTaskSchedule;
 import com.vmware.xenon.common.ServiceHost;
+import lombok.NoArgsConstructor;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,8 +16,10 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Created by slk on 23-Nov-17.
  */
+@NoArgsConstructor
 public class WorkerTaskScheduleGeneratorImpl implements WorkerTaskScheduleGenerator {
 
+    @Inject
     ServiceHost host;
 
     WorkerStatusService workerStatusService = new WorkerStatusService();
