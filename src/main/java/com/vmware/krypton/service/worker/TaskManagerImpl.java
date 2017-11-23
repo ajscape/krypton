@@ -1,10 +1,14 @@
 package com.vmware.krypton.service.worker;
 
+import static com.vmware.krypton.util.XenonUtil.sendOperation;
+
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import com.vmware.krypton.document.worker.TaskDoc;
 import com.vmware.krypton.model.Task;
@@ -12,10 +16,13 @@ import com.vmware.krypton.model.TaskCompletionEvent;
 import com.vmware.krypton.model.TaskContext;
 import com.vmware.krypton.model.TaskDescription;
 import com.vmware.krypton.model.TaskState;
+import com.vmware.krypton.model.WorkerTaskData;
 import com.vmware.krypton.model.WorkerTaskSchedule;
 import com.vmware.krypton.repository.worker.TaskDocRepository;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.Utils;
 
 public class TaskManagerImpl implements TaskManager {
 
@@ -45,9 +52,13 @@ public class TaskManagerImpl implements TaskManager {
     }
 
     @Override
-    public CompletableFuture<Void> receiveTaskInput(String srcTaskId, String dstTaskId, Object input) {
-        return getTaskDoc(dstTaskId).thenCompose(taskDoc -> {
-            taskDoc.inputTaskIdToDataMap.put(srcTaskId, input);
+    public CompletableFuture<Void> receiveTaskInput(WorkerTaskData taskInput) {
+        return getTaskDoc(taskInput.getDstTaskId()).thenCompose(taskDoc -> {
+            Object inputData = taskInput.getData();
+            if(taskInput.isSrcTaskCompletionEvent()) {
+                inputData = new TaskCompletionEvent();
+            }
+            taskDoc.inputTaskIdToDataMap.put(taskInput.getSrcTaskId(), inputData);
             return postTaskDoc(taskDoc).thenCompose(aVoid -> {
                 //check if all inputs present
                 if(taskDoc.inputTaskIdToDataMap.keySet().size() == taskDoc.inputTaskIds.size()) {
@@ -55,7 +66,7 @@ public class TaskManagerImpl implements TaskManager {
                     if(getInputTaskDataMap(taskDoc).isEmpty()) {
                         //if input data map empty, all previous tasks have completed
                         //mark current task as complete
-                        return updateTaskState(dstTaskId, TaskState.COMPLETED);
+                        return updateTaskState(taskInput.getDstTaskId(), TaskState.COMPLETED);
                     } else {
                         //else, schedule the task for execution
                         Task task = taskNameToTaskMap.get(taskDoc.taskName);
@@ -70,13 +81,10 @@ public class TaskManagerImpl implements TaskManager {
     }
 
     @Override
-    public CompletableFuture<Void> receiveTaskCompletionEvent(String srcTaskId, String dstTaskId) {
-        return receiveTaskInput(srcTaskId, dstTaskId, new TaskCompletionEvent());
-    }
-
-    @Override
-    public CompletableFuture<Void> sendTaskOutput(String srcTaskId, String dstTaskId, Object Output) {
-        return null;
+    public CompletableFuture<Void> sendTaskOutput(WorkerTaskData taskOutput) {
+        URI uri = URI.create(taskIdToHostname(taskOutput.getDstTaskId()) + "/krypton/worker/task-input");
+        Operation op = Operation.createPost(uri).setBody(taskOutput);
+        return sendOperation(host, op, null);
     }
 
     @Override
@@ -86,20 +94,33 @@ public class TaskManagerImpl implements TaskManager {
 
     @Override
     public CompletableFuture<Map<String, TaskState>> getAllTasksStates() {
-        return null;
+        return getAllTaskDocs().thenApply(taskDocs -> {
+            return taskDocs.stream().collect(Collectors.toMap(d -> d.taskId, d -> d.taskState));
+        });
     }
 
     @Override
     public CompletableFuture<Void> updateTaskState(String taskId, TaskState taskState) {
-//        switch(taskState) {
-//            default:
-//                TaskDoc taskDoc = new TaskDoc();
-//                taskDoc.taskState = taskState;
-//                return Operation.createPatch(host, taskIdToSelfLink(taskId))
-//                        .setBody(taskDoc);
-//
-//        }
-        return null;
+        if (taskState == TaskState.COMPLETED) {
+            return handleTaskComplete(taskId);
+        } else {
+            TaskDoc taskDoc = new TaskDoc();
+            taskDoc.taskState = taskState;
+
+            if(taskState == TaskState.PARTIAL_COMPLETED) {
+                taskDoc.inputTaskIdToDataMap.forEach((k, v) -> {
+                    if(v instanceof TaskCompletionEvent) {
+                        //skip
+                    } else {
+                        taskDoc.inputTaskIdToDataMap.remove(k);
+                    }
+                });
+            }
+
+            Operation updateStateOp = Operation.createPatch(host, taskIdToSelfLink(taskId))
+                    .setBody(taskDoc);
+            return sendOperation(host, updateStateOp, null);
+        }
     }
 
     @Override
@@ -108,22 +129,30 @@ public class TaskManagerImpl implements TaskManager {
     }
 
     private CompletableFuture<Void> postTaskDoc(TaskDoc taskDoc) {
-        CompletableFuture<Void> future = new CompletableFuture<>();
-        Operation.createPost(host, TaskDocRepository.FACTORY_LINK)
-                .setBody(taskDoc)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        future.completeExceptionally(e);
-                    }
-                    future.complete(null);
-                }).sendWith(host);
-        return future;
+        Operation op = Operation.createPost(host, TaskDocRepository.FACTORY_LINK)
+                .setBody(taskDoc);
+        return sendOperation(host, op, null);
     }
 
     private CompletableFuture<TaskDoc> getTaskDoc(String taskId) {
         Operation op = Operation.createGet(host, taskIdToSelfLink(taskId));
-        //return sendOperation(op, TaskDoc.class);
-        return null;
+        return sendOperation(host, op, TaskDoc.class);
+    }
+
+    private CompletableFuture<List<TaskDoc>> getAllTaskDocs() {
+        Operation op = Operation.createGet(host, TaskDocRepository.FACTORY_LINK + "?expand");
+        return sendOperation(host, op, ServiceDocumentQueryResult.class).thenApply(result -> {
+            List<TaskDoc> taskDocs = new ArrayList<>();
+            result.documents.forEach((selfLink, document) -> {
+                taskDocs.add(Utils.fromJson(document, TaskDoc.class));
+            });
+            return taskDocs;
+        });
+    }
+
+    private CompletableFuture<Void> deleteTaskDoc(String taskId) {
+        Operation op = Operation.createDelete(host, taskIdToSelfLink(taskId));
+        return sendOperation(host, op, null);
     }
 
     private static TaskDoc taskDescriptionToTaskDoc(TaskDescription taskDescription) {
@@ -172,5 +201,14 @@ public class TaskManagerImpl implements TaskManager {
 
     private static String taskIdToSelfLink(String taskId) {
         return TaskDocRepository.FACTORY_LINK + "/" + taskId;
+    }
+
+    private CompletableFuture<Void> handleTaskComplete(String taskId) {
+        return getTaskDoc(taskId).thenCompose(taskDoc -> {
+            taskDoc.outputTaskIds.forEach(outputTaskId ->
+                    sendTaskCompletionEvent(taskId, outputTaskId)
+            );
+            return deleteTaskDoc(taskId);
+        });
     }
 }

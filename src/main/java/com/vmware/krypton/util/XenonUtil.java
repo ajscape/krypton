@@ -15,7 +15,7 @@ public class XenonUtil {
         return 3;
     }
 
-    public <R> CompletableFuture<R> sendOperation(ServiceHost host, Operation op, Class<? extends R> resultClass) {
+    public static <R> CompletableFuture<R> sendOperation(ServiceHost host, Operation op, Class<? extends R> resultClass) {
         CompletableFuture<R> future = new CompletableFuture<>();
         op.setCompletion((o, e) -> {
             if (e != null) {
