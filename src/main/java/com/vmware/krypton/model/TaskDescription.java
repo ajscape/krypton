@@ -15,7 +15,6 @@ public class TaskDescription {
     private final String taskName;
     private Set<String> inputTaskIds = new HashSet<>();
     private Set<String> outputTaskIds = new HashSet<>();
-
     public void addInputTaskId(String taskId){
         inputTaskIds.add(taskId);
     }
@@ -27,4 +26,5 @@ public class TaskDescription {
     public void addOutputTaskIds(Collection<String> taskIds){
         outputTaskIds.addAll(taskIds);
     }
+
 }

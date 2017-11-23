@@ -28,7 +28,6 @@ public class KryptonHost extends ServiceHost {
         // the factory services.
         super.startService(new RootNamespaceService());
         super.startFactory(new TestService());
-        super.startService(new WorkerStatusService());
         return this;
     }
 }

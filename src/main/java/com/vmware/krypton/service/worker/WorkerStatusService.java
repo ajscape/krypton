@@ -1,25 +1,26 @@
 package com.vmware.krypton.service.worker;
 
+import com.vmware.krypton.util.XenonUtil;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.services.common.NodeGroupService;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import static com.vmware.xenon.common.UriUtils.URI_PATH_CHAR;
 
 /**
  * Created by slk on 23-Nov-17.
  */
-public class WorkerStatusService extends StatelessService {
-    String SELF_LINK = "/krypton/worker-status";
+public class WorkerStatusService {
 
-    public Map<String, String> getWorkerToNodeMap() {
-        Operation operation = Operation.createGet(getHost(), "/core/node-groups/default?expand");
-        NodeGroupService.NodeGroupState nodeGroupState = new NodeGroupService.NodeGroupState();
-        nodeGroupState = operation.getBody(NodeGroupService.NodeGroupState.class);
-        return parseAndGetWorkerMap(nodeGroupState);
+    public CompletableFuture<Map<String, String>> getWorkerToNodeMap(ServiceHost host) {
+        Operation operation = Operation.createGet(host, "/core/node-groups/default?expand");
+        return XenonUtil.sendOperation(host, operation, NodeGroupService.NodeGroupState.class)
+                .thenApply(this::parseAndGetWorkerMap);
     }
 
     private Map<String,String> parseAndGetWorkerMap(NodeGroupService.NodeGroupState nodeGroupState) {
