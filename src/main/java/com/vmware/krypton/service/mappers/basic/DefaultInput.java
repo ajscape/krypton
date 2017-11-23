@@ -1,8 +1,8 @@
 package com.vmware.krypton.service.mappers.basic;
 
-import com.vmware.krypton.service.mappers.MapContext;
+import com.vmware.krypton.service.mappers.MapInput;
+import com.vmware.xenon.common.ServiceDocument;
 import java.util.List;
-import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,11 +12,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class DefaultContext extends MapContext<DefaultOutput> {
+public class DefaultInput extends MapInput {
+  List<? extends ServiceDocument> documents;
   private List<String> extractDataMembers;
-
-  @Override
-  public void emmit(DefaultOutput resultMap) {
-
-  }
 }
