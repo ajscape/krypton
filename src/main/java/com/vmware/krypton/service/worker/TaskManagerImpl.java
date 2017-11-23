@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.vmware.krypton.document.worker.TaskDoc;
@@ -19,6 +20,10 @@ import com.vmware.krypton.model.TaskState;
 import com.vmware.krypton.model.WorkerTaskData;
 import com.vmware.krypton.model.WorkerTaskSchedule;
 import com.vmware.krypton.repository.worker.TaskDocRepository;
+import com.vmware.krypton.service.mappers.basic.DefaultMapper;
+import com.vmware.krypton.service.tasks.Combiner;
+import com.vmware.krypton.service.tasks.QueryTask;
+import com.vmware.krypton.service.tasks.ReducerTask;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
@@ -36,6 +41,11 @@ public class TaskManagerImpl implements TaskManager {
     public TaskManagerImpl(ServiceHost host, TaskExecutor taskExecutor) {
         this.host = host;
         workerId = host.getId();
+
+        taskNameToTaskMap.put(QueryTask.class.getName(), new QueryTask());
+        taskNameToTaskMap.put(DefaultMapper.class.getName(), new DefaultMapper());
+        taskNameToTaskMap.put(ReducerTask.class.getName(), new ReducerTask());
+        taskNameToTaskMap.put(Combiner.class.getName(), new Combiner());
     }
 
     @Override
@@ -82,14 +92,14 @@ public class TaskManagerImpl implements TaskManager {
 
     @Override
     public CompletableFuture<Void> sendTaskOutput(WorkerTaskData taskOutput) {
-        URI uri = URI.create(taskIdToHostname(taskOutput.getDstTaskId()) + "/krypton/worker/task-input");
+        String hostName = taskIdToHostname(taskOutput.getDstTaskId());
+        if(hostName == null) {
+            host.log(Level.INFO, "Worker hostname not found for taskId " + taskOutput.getDstTaskId());
+            return CompletableFuture.completedFuture(null);
+        }
+        URI uri = URI.create(hostName + "/krypton/worker/task-input");
         Operation op = Operation.createPost(uri).setBody(taskOutput);
         return sendOperation(host, op, null);
-    }
-
-    @Override
-    public CompletableFuture<Void> sendTaskCompletionEvent(String srcTaskId, String dstTaskId) {
-        return null;
     }
 
     @Override
@@ -176,7 +186,10 @@ public class TaskManagerImpl implements TaskManager {
 
     private String taskIdToHostname(String taskId) {
         String workerId = taskIdToWorkerIdMap.get(taskId);
-        return workerIdToHostnameMap.get(workerId);
+        if(workerId != null) {
+            return workerIdToHostnameMap.get(workerId);
+        }
+        return null;
     }
 
     private TaskContext taskDocToTaskContext(TaskDoc taskDoc) {
@@ -205,9 +218,14 @@ public class TaskManagerImpl implements TaskManager {
 
     private CompletableFuture<Void> handleTaskComplete(String taskId) {
         return getTaskDoc(taskId).thenCompose(taskDoc -> {
-            taskDoc.outputTaskIds.forEach(outputTaskId ->
-                    sendTaskCompletionEvent(taskId, outputTaskId)
-            );
+            taskDoc.outputTaskIds.forEach(outputTaskId -> {
+                WorkerTaskData taskOutput = new WorkerTaskData();
+                taskOutput.setSrcTaskId(taskId);
+                taskOutput.setDstTaskId(outputTaskId);
+                taskOutput.setData(new TaskCompletionEvent());
+                taskOutput.setSrcTaskCompletionEvent(true);
+                sendTaskOutput(taskOutput);
+            });
             return deleteTaskDoc(taskId);
         });
     }

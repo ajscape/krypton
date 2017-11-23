@@ -21,7 +21,11 @@ public class TaskContext<I,O> {
     }
 
     public void emitOutput(String outputTaskId, O output) {
-        taskManager.sendTaskOutput(taskDescription.getTaskId(), outputTaskId, output).join();
+        WorkerTaskData taskOutput = new WorkerTaskData();
+        taskOutput.setSrcTaskId(taskDescription.getTaskId());
+        taskOutput.setDstTaskId(outputTaskId);
+        taskOutput.setData(output);
+        taskManager.sendTaskOutput(taskOutput).join();
     }
 
     public void updateTaskState(TaskState taskState) {
