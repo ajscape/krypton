@@ -1,6 +1,7 @@
 package com.vmware.krypton.controller.worker;
 
 import java.util.concurrent.CompletableFuture;
+import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -14,12 +15,8 @@ public class WorkerTaskController extends JaxRsBridgeStatelessService {
 
     public static final String SELF_lINK = "/krypton/worker";
 
+    @Inject
     private TaskManager taskManager;
-
-    public WorkerTaskController(TaskManager taskManager) {
-        super();
-        this.taskManager = taskManager;
-    }
 
     @POST
     @Path("/task-schedule")

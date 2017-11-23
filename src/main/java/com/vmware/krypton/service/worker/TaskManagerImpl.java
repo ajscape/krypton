@@ -1,24 +1,7 @@
 package com.vmware.krypton.service.worker;
 
-import static com.vmware.krypton.util.XenonUtil.sendOperation;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
-
 import com.vmware.krypton.document.worker.TaskDoc;
-import com.vmware.krypton.model.Task;
-import com.vmware.krypton.model.TaskCompletionEvent;
-import com.vmware.krypton.model.TaskContext;
-import com.vmware.krypton.model.TaskDescription;
-import com.vmware.krypton.model.TaskState;
-import com.vmware.krypton.model.WorkerTaskData;
-import com.vmware.krypton.model.WorkerTaskSchedule;
+import com.vmware.krypton.model.*;
 import com.vmware.krypton.repository.worker.TaskDocRepository;
 import com.vmware.krypton.service.mappers.basic.DefaultMapper;
 import com.vmware.krypton.service.tasks.Combiner;
@@ -29,19 +12,29 @@ import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
 
+import javax.inject.Inject;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
+
+import static com.vmware.krypton.util.XenonUtil.sendOperation;
+
 public class TaskManagerImpl implements TaskManager {
 
+    @Inject
     private ServiceHost host;
+    @Inject
     private TaskExecutor taskExecutor;
-    private String workerId;
-    private Map<String, String> taskIdToWorkerIdMap= new HashMap<>();
+    private Map<String, String> taskIdToWorkerIdMap = new HashMap<>();
     private Map<String, String> workerIdToHostnameMap = new HashMap<>();
     private Map<String, Task> taskNameToTaskMap = new HashMap<>();
 
-    public TaskManagerImpl(ServiceHost host, TaskExecutor taskExecutor) {
-        this.host = host;
-        workerId = host.getId();
-
+    public TaskManagerImpl() {
         taskNameToTaskMap.put(QueryTask.class.getName(), new QueryTask());
         taskNameToTaskMap.put(DefaultMapper.class.getName(), new DefaultMapper());
         taskNameToTaskMap.put(ReducerTask.class.getName(), new ReducerTask());
@@ -65,15 +58,15 @@ public class TaskManagerImpl implements TaskManager {
     public CompletableFuture<Void> receiveTaskInput(WorkerTaskData taskInput) {
         return getTaskDoc(taskInput.getDstTaskId()).thenCompose(taskDoc -> {
             Object inputData = taskInput.getData();
-            if(taskInput.isSrcTaskCompletionEvent()) {
+            if (taskInput.isSrcTaskCompletionEvent()) {
                 inputData = new TaskCompletionEvent();
             }
             taskDoc.inputTaskIdToDataMap.put(taskInput.getSrcTaskId(), inputData);
             return postTaskDoc(taskDoc).thenCompose(aVoid -> {
                 //check if all inputs present
-                if(taskDoc.inputTaskIdToDataMap.keySet().size() == taskDoc.inputTaskIds.size()) {
+                if (taskDoc.inputTaskIdToDataMap.keySet().size() == taskDoc.inputTaskIds.size()) {
                     //if yes, check if there is any real data input
-                    if(getInputTaskDataMap(taskDoc).isEmpty()) {
+                    if (getInputTaskDataMap(taskDoc).isEmpty()) {
                         //if input data map empty, all previous tasks have completed
                         //mark current task as complete
                         return updateTaskState(taskInput.getDstTaskId(), TaskState.COMPLETED);
@@ -93,7 +86,7 @@ public class TaskManagerImpl implements TaskManager {
     @Override
     public CompletableFuture<Void> sendTaskOutput(WorkerTaskData taskOutput) {
         String hostName = taskIdToHostname(taskOutput.getDstTaskId());
-        if(hostName == null) {
+        if (hostName == null) {
             host.log(Level.INFO, "Worker hostname not found for taskId " + taskOutput.getDstTaskId());
             return CompletableFuture.completedFuture(null);
         }
@@ -117,9 +110,9 @@ public class TaskManagerImpl implements TaskManager {
             TaskDoc taskDoc = new TaskDoc();
             taskDoc.taskState = taskState;
 
-            if(taskState == TaskState.PARTIAL_COMPLETED) {
+            if (taskState == TaskState.PARTIAL_COMPLETED) {
                 taskDoc.inputTaskIdToDataMap.forEach((k, v) -> {
-                    if(v instanceof TaskCompletionEvent) {
+                    if (v instanceof TaskCompletionEvent) {
                         //skip
                     } else {
                         taskDoc.inputTaskIdToDataMap.remove(k);
@@ -186,7 +179,7 @@ public class TaskManagerImpl implements TaskManager {
 
     private String taskIdToHostname(String taskId) {
         String workerId = taskIdToWorkerIdMap.get(taskId);
-        if(workerId != null) {
+        if (workerId != null) {
             return workerIdToHostnameMap.get(workerId);
         }
         return null;
@@ -203,7 +196,7 @@ public class TaskManagerImpl implements TaskManager {
     private Map<String, Object> getInputTaskDataMap(TaskDoc taskDoc) {
         Map taskDataMap = new HashMap();
         taskDoc.inputTaskIdToDataMap.forEach((taskId, data) -> {
-            if(data instanceof TaskCompletionEvent) {
+            if (data instanceof TaskCompletionEvent) {
                 //skip
             } else {
                 taskDataMap.put(taskId, data);
