@@ -3,8 +3,8 @@ package com.vmware.krypton.document.worker;
 import java.util.List;
 import java.util.Map;
 
+import com.vmware.krypton.model.TaskState;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.TaskState;
 
 public class TaskDoc extends ServiceDocument {
     public String taskId;
