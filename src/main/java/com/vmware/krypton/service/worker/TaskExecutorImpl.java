@@ -21,7 +21,7 @@ public class TaskExecutorImpl implements TaskExecutor {
             public void run() {
                 taskContext.updateTaskState(TaskState.RUNNING);
                 task.execute(taskContext);
-                taskContext.updateTaskState(TaskState.PAUSED);
+                taskContext.updateTaskState(TaskState.PARTIAL_COMPLETED);
             }
         });
 
