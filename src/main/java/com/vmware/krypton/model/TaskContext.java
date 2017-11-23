@@ -26,9 +26,5 @@ public class TaskContext<I,O> {
 
     public void updateTaskState(TaskState taskState) {
         taskManager.updateTaskState(taskDescription.getTaskId(), taskState);
-        if(taskState == TaskState.COMPLETED) {
-            taskDescription.getOutputTaskIds().forEach(outputTaskId ->
-                    taskManager.sendTaskCompletionEvent(taskDescription.getTaskId(), outputTaskId));
-        }
     }
 }
