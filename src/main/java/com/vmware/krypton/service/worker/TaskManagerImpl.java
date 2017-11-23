@@ -102,6 +102,11 @@ public class TaskManagerImpl implements TaskManager {
         return null;
     }
 
+    @Override
+    public ServiceHost getHost() {
+        return host;
+    }
+
     private CompletableFuture<Void> postTaskDoc(TaskDoc taskDoc) {
         CompletableFuture<Void> future = new CompletableFuture<>();
         Operation.createPost(host, TaskDocRepository.FACTORY_LINK)
