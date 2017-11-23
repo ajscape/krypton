@@ -1,22 +1,23 @@
 package com.vmware.krypton.service.worker;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
-import com.vmware.krypton.model.WorkerTaskSchedule;
 import com.vmware.krypton.model.TaskState;
+import com.vmware.krypton.model.WorkerTaskSchedule;
 
 public interface TaskManager {
-    void receiveWorkerTaskSchedule(WorkerTaskSchedule schedule);
+    CompletableFuture<Void> receiveWorkerTaskSchedule(WorkerTaskSchedule schedule);
 
-    void receiveTaskInput(String srcTaskId, String dstTaskId, Object input);
+    CompletableFuture<Void> receiveTaskInput(String srcTaskId, String dstTaskId, Object input);
 
-    void receiveTaskCompletionEvent(String srcTaskId, String dstTaskId);
+    CompletableFuture<Void> receiveTaskCompletionEvent(String srcTaskId, String dstTaskId);
 
-    void sendTaskOutput(String srcTaskId, String dstTaskId, Object Output);
+    CompletableFuture<Void> sendTaskOutput(String srcTaskId, String dstTaskId, Object Output);
 
-    void sendTaskCompletionEvent(String srcTaskId, String dstTaskId);
+    CompletableFuture<Void> sendTaskCompletionEvent(String srcTaskId, String dstTaskId);
 
-    Map<String, TaskState> getAllTasksStates();
+    CompletableFuture<Map<String, TaskState>> getAllTasksStates();
 
-    void updateTaskState(String taskId, TaskState taskState);
+    CompletableFuture<Void> updateTaskState(String taskId, TaskState taskState);
 }
