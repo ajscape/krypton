@@ -1,4 +1,4 @@
-package com.vmware.krypton.service.worker;
+package com.vmware.krypton.service.master;
 
 import com.vmware.krypton.util.XenonUtil;
 import com.vmware.xenon.common.Operation;

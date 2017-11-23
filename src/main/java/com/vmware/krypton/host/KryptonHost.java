@@ -2,7 +2,6 @@ package com.vmware.krypton.host;
 
 import java.util.logging.Level;
 
-import com.vmware.krypton.service.worker.WorkerStatusService;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.services.common.RootNamespaceService;
 
