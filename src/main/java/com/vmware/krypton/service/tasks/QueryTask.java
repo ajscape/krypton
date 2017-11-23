@@ -21,13 +21,13 @@ public class QueryTask implements Task {
         List<String> input = new ArrayList<String>(taskContext.getInput());
         List<String> outputTaksIds = new ArrayList<String>(taskContext.getTaskDescription().getOutputTaskIds());
 
-        QueryTask queryTask = Utils.fromJson(input.get(0), QueryTask.class);
+      com.vmware.xenon.services.common.QueryTask queryTask = Utils.fromJson(input.get(0), com.vmware.xenon.services.common.QueryTask.class);
 
         Operation post = Operation.createPost(taskContext.getTaskManager().getHost(), "/core/query-tasks")
             .setBody(queryTask)
             .setCompletion((o, e) -> {
-                    QueryTask rsp = o.getBody(QueryTask.class);
-                    taskContext.emitOutput(outputTaksIds.get(0), rsp);
+              com.vmware.xenon.services.common.QueryTask rsp = o.getBody(com.vmware.xenon.services.common.QueryTask.class);
+                    taskContext.emitOutput(outputTaksIds.get(0), rsp.results.documents.values());
                 });
 
         taskContext.getTaskManager().getHost().sendRequest(post);
