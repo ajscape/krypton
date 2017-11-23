@@ -1,18 +1,14 @@
 package com.vmware.krypton.service.master;
 
-import com.google.inject.Inject;
 import com.vmware.krypton.model.TaskDescription;
 import com.vmware.krypton.model.TaskGraph;
 import com.vmware.krypton.model.WorkerTaskSchedule;
 import com.vmware.xenon.common.ServiceHost;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.testng.annotations.Test;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by slk on 23-Nov-17.
