@@ -24,7 +24,9 @@ public class JobToTaskGraphTransformerImpl implements JobToTaskGraphTransformer 
     @Override
     public TaskGraph transformJobToTaskGraph(JobDescription jobDescription) {
         TaskGraph dag = new TaskGraph();
-        dag.addNode(new TaskDescription("1", QueryTask.class.getName()));
+        TaskDescription queryTask = new TaskDescription("1", QueryTask.class.getName());
+        queryTask.addInputTaskId("0");
+        dag.addNode(queryTask);
 
         TaskDescription splitterTask = new TaskDescription("2", SplitterTask.class.getName());
         dag.addNode(splitterTask);
@@ -44,6 +46,7 @@ public class JobToTaskGraphTransformerImpl implements JobToTaskGraphTransformer 
         dag.addNode(combinerTask);
         reducerTasks.forEach(reducerTask -> dag.addEdge(reducerTask.getTaskId(), Arrays.asList(combinerTask)));
 
+        combinerTask.addOutputTaskIds("0");
         return dag;
     }
 
