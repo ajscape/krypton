@@ -1,14 +1,15 @@
 package com.vmware.krypton.service.master;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.Test;
+
 import com.vmware.krypton.model.TaskDescription;
 import com.vmware.krypton.model.TaskGraph;
 import com.vmware.krypton.model.WorkerTaskSchedule;
 import com.vmware.xenon.common.ServiceHost;
-import org.testng.annotations.Test;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by slk on 23-Nov-17.

@@ -5,6 +5,7 @@ import com.vmware.krypton.service.master.*;
 import com.vmware.krypton.service.worker.TaskExecutor;
 import com.vmware.krypton.service.worker.TaskExecutorImpl;
 import com.vmware.krypton.service.worker.TaskManager;
+import com.vmware.krypton.service.worker.TaskManagerImpl;
 
 /**
  * Created by nibunangs on 23-Nov-2017.
@@ -16,8 +17,8 @@ public class KryptonModule extends AbstractModule {
         bind(JobManager.class).to(JobManagerImpl.class);
         bind(JobToTaskGraphTransformer.class).to(JobToTaskGraphTransformerImpl.class);
         bind(TaskExecutor.class).to(TaskExecutorImpl.class);
-        bind(TaskManager.class).to(TaskManager.class);
         bind(WorkerTaskScheduleGenerator.class).to(WorkerTaskScheduleGeneratorImpl.class);
+        bind(TaskManager.class).to(TaskManagerImpl.class);
     }
 }
 

@@ -1,10 +1,32 @@
 package com.vmware.krypton.service.worker;
 
+import static com.vmware.krypton.util.XenonUtil.sendOperation;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import javax.inject.Inject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.vmware.krypton.document.worker.TaskDoc;
-import com.vmware.krypton.model.*;
+import com.vmware.krypton.model.Task;
+import com.vmware.krypton.model.TaskCompletionEvent;
+import com.vmware.krypton.model.TaskContext;
+import com.vmware.krypton.model.TaskDescription;
+import com.vmware.krypton.model.TaskState;
+import com.vmware.krypton.model.WorkerTaskData;
+import com.vmware.krypton.model.WorkerTaskSchedule;
 import com.vmware.krypton.repository.worker.TaskDocRepository;
 import com.vmware.krypton.service.mappers.basic.DefaultMapper;
 import com.vmware.krypton.service.tasks.Combiner;
+import com.vmware.krypton.service.tasks.CountMapper;
+import com.vmware.krypton.service.tasks.HelloWorldTask;
 import com.vmware.krypton.service.tasks.QueryTask;
 import com.vmware.krypton.service.tasks.ReducerTask;
 import com.vmware.xenon.common.Operation;
@@ -12,19 +34,9 @@ import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
 
-import javax.inject.Inject;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
-
-import static com.vmware.krypton.util.XenonUtil.sendOperation;
-
 public class TaskManagerImpl implements TaskManager {
+
+    private static final Logger logger = LoggerFactory.getLogger(TaskManagerImpl.class);
 
     @Inject
     private ServiceHost host;
@@ -39,6 +51,8 @@ public class TaskManagerImpl implements TaskManager {
         taskNameToTaskMap.put(DefaultMapper.class.getName(), new DefaultMapper());
         taskNameToTaskMap.put(ReducerTask.class.getName(), new ReducerTask());
         taskNameToTaskMap.put(Combiner.class.getName(), new Combiner());
+        taskNameToTaskMap.put("helloWorld", new HelloWorldTask());
+        taskNameToTaskMap.put("countMapper", new CountMapper());
     }
 
     @Override
@@ -62,7 +76,7 @@ public class TaskManagerImpl implements TaskManager {
                 inputData = new TaskCompletionEvent();
             }
             taskDoc.inputTaskIdToDataMap.put(taskInput.getSrcTaskId(), inputData);
-            return postTaskDoc(taskDoc).thenCompose(aVoid -> {
+            return patchTaskDoc(taskDoc).thenCompose(aVoid -> {
                 //check if all inputs present
                 if (taskDoc.inputTaskIdToDataMap.keySet().size() == taskDoc.inputTaskIds.size()) {
                     //if yes, check if there is any real data input
@@ -87,7 +101,7 @@ public class TaskManagerImpl implements TaskManager {
     public CompletableFuture<Void> sendTaskOutput(WorkerTaskData taskOutput) {
         String hostName = taskIdToHostname(taskOutput.getDstTaskId());
         if (hostName == null) {
-            host.log(Level.INFO, "Worker hostname not found for taskId " + taskOutput.getDstTaskId());
+            logger.error("Worker hostname not found for taskId " + taskOutput.getDstTaskId());
             return CompletableFuture.completedFuture(null);
         }
         URI uri = URI.create(hostName + "/krypton/worker/task-input");
@@ -104,25 +118,27 @@ public class TaskManagerImpl implements TaskManager {
 
     @Override
     public CompletableFuture<Void> updateTaskState(String taskId, TaskState taskState) {
+        logger.info("Task state changed: taskId={} and state={}", taskId, taskState);
         if (taskState == TaskState.COMPLETED) {
             return handleTaskComplete(taskId);
         } else {
-            TaskDoc taskDoc = new TaskDoc();
-            taskDoc.taskState = taskState;
+            return getTaskDoc(taskId).thenCompose(taskDoc -> {
+                taskDoc.taskState = taskState;
 
-            if (taskState == TaskState.PARTIAL_COMPLETED) {
-                taskDoc.inputTaskIdToDataMap.forEach((k, v) -> {
-                    if (v instanceof TaskCompletionEvent) {
-                        //skip
-                    } else {
-                        taskDoc.inputTaskIdToDataMap.remove(k);
-                    }
-                });
-            }
+                if (taskState == TaskState.PARTIAL_COMPLETED) {
+                    taskDoc.inputTaskIdToDataMap.forEach((k, v) -> {
+                        if (v instanceof TaskCompletionEvent) {
+                            //skip
+                        } else {
+                            taskDoc.inputTaskIdToDataMap.remove(k);
+                        }
+                    });
+                }
 
-            Operation updateStateOp = Operation.createPatch(host, taskIdToSelfLink(taskId))
-                    .setBody(taskDoc);
-            return sendOperation(host, updateStateOp, null);
+                Operation updateStateOp = Operation.createPatch(host, taskIdToSelfLink(taskId))
+                        .setBody(taskDoc);
+                return sendOperation(host, updateStateOp, null);
+            });
         }
     }
 
@@ -132,7 +148,15 @@ public class TaskManagerImpl implements TaskManager {
     }
 
     private CompletableFuture<Void> postTaskDoc(TaskDoc taskDoc) {
+        logger.info("Adding new Task: taskId={} and taskName={}", taskDoc.taskId, taskDoc.taskName);
         Operation op = Operation.createPost(host, TaskDocRepository.FACTORY_LINK)
+                .setBody(taskDoc);
+        return sendOperation(host, op, null);
+    }
+
+    private CompletableFuture<Void> patchTaskDoc(TaskDoc taskDoc) {
+        logger.info("Updating Task: taskId={} and taskName={}", taskDoc.taskId, taskDoc.taskName);
+        Operation op = Operation.createPatch(host, taskIdToSelfLink(taskDoc.taskId))
                 .setBody(taskDoc);
         return sendOperation(host, op, null);
     }
@@ -146,9 +170,11 @@ public class TaskManagerImpl implements TaskManager {
         Operation op = Operation.createGet(host, TaskDocRepository.FACTORY_LINK + "?expand");
         return sendOperation(host, op, ServiceDocumentQueryResult.class).thenApply(result -> {
             List<TaskDoc> taskDocs = new ArrayList<>();
-            result.documents.forEach((selfLink, document) -> {
-                taskDocs.add(Utils.fromJson(document, TaskDoc.class));
-            });
+            if(result.documents != null) {
+                result.documents.forEach((selfLink, document) -> {
+                    taskDocs.add(Utils.fromJson(document, TaskDoc.class));
+                });
+            }
             return taskDocs;
         });
     }
