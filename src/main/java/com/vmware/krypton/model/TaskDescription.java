@@ -1,9 +1,6 @@
 package com.vmware.krypton.model;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,6 +21,10 @@ public class TaskDescription {
     }
 
     public void addOutputTaskIds(String... taskIds){
-        outputTaskIds.addAll(Arrays.asList(taskIds));
+        addOutputTaskIds(Arrays.asList(taskIds));
+    }
+
+    public void addOutputTaskIds(Collection<String> taskIds){
+        outputTaskIds.addAll(taskIds);
     }
 }
