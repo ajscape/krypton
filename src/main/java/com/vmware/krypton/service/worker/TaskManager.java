@@ -2,11 +2,11 @@ package com.vmware.krypton.service.worker;
 
 import java.util.Map;
 
-import com.vmware.krypton.model.NodeTasksSchedule;
+import com.vmware.krypton.model.WorkerTaskSchedule;
 import com.vmware.krypton.model.TaskState;
 
 public interface TaskManager {
-    void receiveNodeTasksSchedule(NodeTasksSchedule schedule);
+    void receiveWorkerTaskSchedule(WorkerTaskSchedule schedule);
 
     void receiveTaskInput(String srcTaskId, String dstTaskId, Object input);
 
