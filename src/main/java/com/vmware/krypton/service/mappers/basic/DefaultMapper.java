@@ -32,7 +32,7 @@ public class DefaultMapper implements Mapper<DefaultInput>, Task<DefaultInput, M
           Object value = field.get(document);
 
           resultMap.computeIfPresent(fieldName, (k,v) -> { v.add(value); return v;});
-          resultMap.computeIfAbsent(fieldName, (k) -> Arrays.asList(value));
+          resultMap.computeIfAbsent(fieldName, (k) -> new ArrayList<>(Arrays.asList(value)));
         } catch (Exception e) {
           throw new MapperException(e.getMessage(), e.getCause());
         }
