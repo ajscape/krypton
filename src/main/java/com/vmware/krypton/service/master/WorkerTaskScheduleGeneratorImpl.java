@@ -40,10 +40,9 @@ public class WorkerTaskScheduleGeneratorImpl implements WorkerTaskScheduleGenera
 
         workerToHostMap.forEach((k,v) -> {
             WorkerTaskSchedule workerTaskSchedule = new WorkerTaskSchedule();
-            workerTaskSchedule.setWorkerId(k);
-            workerTaskSchedule.setWorkerIdToHostnameMap(workerToHostMap);
+            workerTaskSchedule.setHostname(workerToHostMap.get(k));
             workerTaskSchedule.setTaskDescriptions(new ArrayList<>());
-            workerTaskSchedule.setTaskIdToWorkerIdMap(new HashMap<>());
+            workerTaskSchedule.setTaskIdToHostnameMap(new HashMap<>());
             workerTaskSchedules.add(workerTaskSchedule);
         });
 
@@ -51,7 +50,7 @@ public class WorkerTaskScheduleGeneratorImpl implements WorkerTaskScheduleGenera
         int taskSchedule = workerTaskSchedules.size();
 
         for (Map.Entry<String, TaskDescription> entry : taskGraphMap.entrySet()){
-            updateTaskToWorker(workerTaskSchedules.get(i % taskSchedule), entry);
+            updateTaskToWorker(workerTaskSchedules.get(i % taskSchedule), entry, workerToHostMap);
             updateTaskIdToWorkerMap(workerTaskSchedules, entry);
             i++;
         }
@@ -60,19 +59,19 @@ public class WorkerTaskScheduleGeneratorImpl implements WorkerTaskScheduleGenera
 
     private void updateTaskIdToWorkerMap(List<WorkerTaskSchedule> workerTaskSchedules, Map.Entry<String, TaskDescription> taskMap) {
         workerTaskSchedules.forEach(taskSchedule -> {
-            Map<String, String> taskIdMap = taskSchedule.getTaskIdToWorkerIdMap();
-            taskIdMap.put(taskMap.getKey(), taskSchedule.getWorkerId());
-            taskSchedule.setTaskIdToWorkerIdMap(taskIdMap);
+            Map<String, String> taskIdMap = taskSchedule.getTaskIdToHostnameMap();
+            taskIdMap.put(taskMap.getKey(), taskSchedule.getHostname());
+            taskSchedule.setTaskIdToHostnameMap(taskIdMap);
         });
     }
 
-    private void updateTaskToWorker(WorkerTaskSchedule taskSchedule, Map.Entry<String, TaskDescription> taskMap) {
+    private void updateTaskToWorker(WorkerTaskSchedule taskSchedule, Map.Entry<String, TaskDescription> taskMap, Map<String, String> workerToHostMap) {
         List<TaskDescription> taskDescriptionList = taskSchedule.getTaskDescriptions();
         taskDescriptionList.add(taskMap.getValue());
 
-        Map<String, String> taskIdMap = taskSchedule.getTaskIdToWorkerIdMap();
-        taskIdMap.put(taskMap.getKey(), taskSchedule.getWorkerId());
-        taskSchedule.setTaskIdToWorkerIdMap(taskIdMap);
+        Map<String, String> taskIdMap = taskSchedule.getTaskIdToHostnameMap();
+        taskIdMap.put(taskMap.getKey(), workerToHostMap.get(taskSchedule.getHostname()));
+        taskSchedule.setTaskIdToHostnameMap(taskIdMap);
     }
 
 }

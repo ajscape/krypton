@@ -55,8 +55,7 @@ public class JobManagerImpl implements JobManager {
 
     @Override
     public CompletableFuture<Object> sendNodeTasksSchedule(WorkerTaskSchedule workerTaskSchedule) {
-        String workerNodeId = workerTaskSchedule.getWorkerIdToHostnameMap().get(workerTaskSchedule.getWorkerId());
-        String workerNodeURL = workerNodeId + SELF_LINK + TASK_SCHEDULE;
+        String workerNodeURL = workerTaskSchedule.getHostname() + SELF_LINK + TASK_SCHEDULE;
         Operation op = Operation.createPost(host, workerNodeURL)
                 .setBody(workerTaskSchedule);
         log.info("Sending the task[{}] to Worker-Node:{}", workerTaskSchedule.getTaskDescriptions(), workerNodeURL);

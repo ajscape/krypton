@@ -9,8 +9,7 @@ import java.util.Map;
 @Getter
 @Setter
 public class WorkerTaskSchedule {
-    private String workerId;
+    private String hostname;
     private List<TaskDescription> taskDescriptions;
-    private Map<String, String> taskIdToWorkerIdMap;
-    private Map<String, String> workerIdToHostnameMap;
+    private Map<String, String> taskIdToHostnameMap;
 }

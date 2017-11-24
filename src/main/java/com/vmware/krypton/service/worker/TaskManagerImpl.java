@@ -40,8 +40,7 @@ public class TaskManagerImpl implements TaskManager {
     private ServiceHost host;
     @Inject
     private TaskExecutor taskExecutor;
-    private Map<String, String> taskIdToWorkerIdMap = new HashMap<>();
-    private Map<String, String> workerIdToHostnameMap = new HashMap<>();
+    private Map<String, String> taskIdToHostnameMap = new HashMap<>();
     private Map<String, Task> taskNameToTaskMap = new HashMap<>();
 
     public TaskManagerImpl() {
@@ -54,8 +53,7 @@ public class TaskManagerImpl implements TaskManager {
 
     @Override
     public CompletableFuture<Void> receiveWorkerTaskSchedule(WorkerTaskSchedule schedule) {
-        taskIdToWorkerIdMap.putAll(schedule.getTaskIdToWorkerIdMap());
-        workerIdToHostnameMap.putAll(schedule.getWorkerIdToHostnameMap());
+        taskIdToHostnameMap.putAll(schedule.getTaskIdToHostnameMap());
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         schedule.getTaskDescriptions().forEach(taskDescription -> {
@@ -102,7 +100,7 @@ public class TaskManagerImpl implements TaskManager {
         } else {
             logger.info("{}: Sending data to {}", taskOutput.getSrcTaskId(), taskOutput.getDstTaskId());
         }
-        String hostName = taskIdToHostname(taskOutput.getDstTaskId());
+        String hostName = taskIdToHostnameMap.get(taskOutput.getDstTaskId());
         if (hostName == null) {
             logger.error("{}: Unable to find hostname for {}", taskOutput.getSrcTaskId(), taskOutput.getDstTaskId());
             return CompletableFuture.completedFuture(null);
@@ -199,14 +197,6 @@ public class TaskManagerImpl implements TaskManager {
         taskDescription.setInputTaskIds(taskDoc.inputTaskIds);
         taskDescription.setOutputTaskIds(taskDoc.outputTaskIds);
         return taskDescription;
-    }
-
-    private String taskIdToHostname(String taskId) {
-        String workerId = taskIdToWorkerIdMap.get(taskId);
-        if (workerId != null) {
-            return workerIdToHostnameMap.get(workerId);
-        }
-        return null;
     }
 
     private TaskContext taskDocToTaskContext(TaskDoc taskDoc) {
