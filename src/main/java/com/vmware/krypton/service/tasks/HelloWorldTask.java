@@ -1,22 +1,32 @@
 package com.vmware.krypton.service.tasks;
 
+import java.util.List;
+
+import lombok.ToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vmware.krypton.model.Task;
 import com.vmware.krypton.model.TaskContext;
+import com.vmware.krypton.service.tasks.HelloWorldTask.Message;
 
-public class HelloWorldTask implements Task<String, String> {
+public class HelloWorldTask implements Task<Message, Message> {
     public static final Logger logger = LoggerFactory.getLogger(HelloWorldTask.class);
 
     @Override
-    public void execute(TaskContext<String, String> taskContext) {
-        String text = taskContext.getInput().iterator().next();
+    public void execute(TaskContext<Message, Message> taskContext) {
+        List<Message> messages = taskContext.getInput(Message.class);
         logger.info("Hello World");
-        logger.info("Input Data = " + text);
+        logger.info("Input Data = " + messages);
 
         taskContext.getTaskDescription().getOutputTaskIds().forEach(taskId ->
-            taskContext.emitOutput(taskId, text)
+            messages.forEach(message -> taskContext.emitOutput(taskId, message))
         );
+    }
+
+    @ToString
+    public static class Message {
+        public String key;
+        public String value;
     }
 }

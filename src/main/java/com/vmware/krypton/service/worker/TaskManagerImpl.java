@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import com.vmware.krypton.document.worker.TaskDoc;
 import com.vmware.krypton.model.Task;
-import com.vmware.krypton.model.TaskCompletionEvent;
 import com.vmware.krypton.model.TaskContext;
 import com.vmware.krypton.model.TaskDescription;
 import com.vmware.krypton.model.TaskState;
@@ -25,9 +24,8 @@ import com.vmware.krypton.model.WorkerTaskSchedule;
 import com.vmware.krypton.repository.worker.TaskDocRepository;
 import com.vmware.krypton.service.mappers.basic.DefaultMapper;
 import com.vmware.krypton.service.tasks.Combiner;
-import com.vmware.krypton.service.tasks.CountMapper;
 import com.vmware.krypton.service.tasks.HelloWorldTask;
-import com.vmware.krypton.service.tasks.QueryTask;
+import com.vmware.krypton.service.tasks.InputQueryTask;
 import com.vmware.krypton.service.tasks.ReducerTask;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
@@ -47,12 +45,11 @@ public class TaskManagerImpl implements TaskManager {
     private Map<String, Task> taskNameToTaskMap = new HashMap<>();
 
     public TaskManagerImpl() {
-        taskNameToTaskMap.put(QueryTask.class.getName(), new QueryTask());
+        taskNameToTaskMap.put(InputQueryTask.class.getName(), new InputQueryTask());
         taskNameToTaskMap.put(DefaultMapper.class.getName(), new DefaultMapper());
         taskNameToTaskMap.put(ReducerTask.class.getName(), new ReducerTask());
         taskNameToTaskMap.put(Combiner.class.getName(), new Combiner());
         taskNameToTaskMap.put("helloWorld", new HelloWorldTask());
-        taskNameToTaskMap.put("countMapper", new CountMapper());
     }
 
     @Override
@@ -71,26 +68,24 @@ public class TaskManagerImpl implements TaskManager {
     @Override
     public CompletableFuture<Void> receiveTaskInput(WorkerTaskData taskInput) {
         return getTaskDoc(taskInput.getDstTaskId()).thenCompose(taskDoc -> {
-            Object inputData = taskInput.getData();
-            if (taskInput.isSrcTaskCompletionEvent()) {
-                inputData = new TaskCompletionEvent();
+            String inputData = taskInput.getData();
+            if (taskInput.isSrcTaskCompleted()) {
+                taskDoc.inputTaskIdToCompletionMap.put(taskInput.getSrcTaskId(), true);
             }
             taskDoc.inputTaskIdToDataMap.put(taskInput.getSrcTaskId(), inputData);
             return patchTaskDoc(taskDoc).thenCompose(aVoid -> {
-                //check if all inputs present
-                if (taskDoc.inputTaskIdToDataMap.keySet().size() == taskDoc.inputTaskIds.size()) {
-                    //if yes, check if there is any real data input
-                    if (getInputTaskDataMap(taskDoc).isEmpty()) {
-                        //if input data map empty, all previous tasks have completed
-                        //mark current task as complete
-                        return updateTaskState(taskInput.getDstTaskId(), TaskState.COMPLETED);
-                    } else {
-                        //else, schedule the task for execution
-                        Task task = taskNameToTaskMap.get(taskDoc.taskName);
-                        TaskContext taskContext = taskDocToTaskContext(taskDoc);
-                        taskExecutor.executeTask(task, taskContext);
-                        return CompletableFuture.completedFuture(null);
-                    }
+                //check if all input tasks completed
+                if (taskDoc.inputTaskIdToCompletionMap.keySet().size() == taskDoc.inputTaskIds.size()) {
+                    //if yes, mark current task as complete
+                    return updateTaskState(taskInput.getDstTaskId(), TaskState.COMPLETED);
+                } else if (taskDoc.inputTaskIdToDataMap.keySet().size() == taskDoc.inputTaskIds.size()) {
+                    //else if all input data present, schedule the task for execution
+                    Task task = taskNameToTaskMap.get(taskDoc.taskName);
+                    TaskContext taskContext = taskDocToTaskContext(taskDoc);
+                    taskExecutor.executeTask(task, taskContext);
+                    return CompletableFuture.completedFuture(null);
+                } else {
+                    // wait for all input data to arrive
                 }
                 return CompletableFuture.completedFuture(null);
             });
@@ -126,13 +121,7 @@ public class TaskManagerImpl implements TaskManager {
                 taskDoc.taskState = taskState;
 
                 if (taskState == TaskState.PARTIAL_COMPLETED) {
-                    taskDoc.inputTaskIdToDataMap.forEach((k, v) -> {
-                        if (v instanceof TaskCompletionEvent) {
-                            //skip
-                        } else {
-                            taskDoc.inputTaskIdToDataMap.remove(k);
-                        }
-                    });
+                    taskDoc.inputTaskIdToDataMap = new HashMap<>();
                 }
 
                 Operation updateStateOp = Operation.createPatch(host, taskIdToSelfLink(taskId))
@@ -191,6 +180,7 @@ public class TaskManagerImpl implements TaskManager {
         taskDoc.inputTaskIds = taskDescription.getInputTaskIds();
         taskDoc.outputTaskIds = taskDescription.getOutputTaskIds();
         taskDoc.inputTaskIdToDataMap = new HashMap<>();
+        taskDoc.inputTaskIdToCompletionMap = new HashMap<>();
         taskDoc.taskState = TaskState.WAITING;
         taskDoc.documentSelfLink = taskDoc.taskId;
         return taskDoc;
@@ -215,20 +205,9 @@ public class TaskManagerImpl implements TaskManager {
         TaskContext taskContext = new TaskContext();
         taskContext.setTaskManager(this);
         taskContext.setTaskDescription(taskDocToTaskDescription(taskDoc));
-        taskContext.setInputTaskIdToDataMap(getInputTaskDataMap(taskDoc));
+        taskContext.setInputTaskIdToDataMap(taskDoc.inputTaskIdToDataMap);
+        taskContext.setInputTaskIdToCompletionMap(taskDoc.inputTaskIdToCompletionMap);
         return taskContext;
-    }
-
-    private Map<String, Object> getInputTaskDataMap(TaskDoc taskDoc) {
-        Map taskDataMap = new HashMap();
-        taskDoc.inputTaskIdToDataMap.forEach((taskId, data) -> {
-            if (data instanceof TaskCompletionEvent) {
-                //skip
-            } else {
-                taskDataMap.put(taskId, data);
-            }
-        });
-        return taskDataMap;
     }
 
     private static String taskIdToSelfLink(String taskId) {
@@ -241,8 +220,8 @@ public class TaskManagerImpl implements TaskManager {
                 WorkerTaskData taskOutput = new WorkerTaskData();
                 taskOutput.setSrcTaskId(taskId);
                 taskOutput.setDstTaskId(outputTaskId);
-                taskOutput.setData(new TaskCompletionEvent());
-                taskOutput.setSrcTaskCompletionEvent(true);
+                taskOutput.setData("");
+                taskOutput.setSrcTaskCompleted(true);
                 sendTaskOutput(taskOutput);
             });
             return deleteTaskDoc(taskId);

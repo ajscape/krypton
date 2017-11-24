@@ -46,8 +46,8 @@ public class DefaultMapper implements Mapper<DefaultInput>, Task<DefaultInput, M
   public void execute(TaskContext taskContext) {
 
     DefaultInput defaultInput = new DefaultInput();
-    Collection<List<DefaultInput>> input1 = taskContext.getInput();
-    List<DefaultInput> flatDefaultInput = input1.stream().flatMap(r -> r.stream()).collect(Collectors.toList());
+    List<DefaultInput> flatDefaultInput = taskContext.getInput(DefaultInput.class);
+    //List<DefaultInput> flatDefaultInput = input1.stream().flatMap(r -> r.stream()).collect(Collectors.toList());
     List<? extends ServiceDocument> documents = flatDefaultInput.stream().map(d -> d.getDocuments()).flatMap(s -> s.stream()).collect(Collectors.toList());
 
     Map<String, List<Object>> resultMap = new HashMap<>();

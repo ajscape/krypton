@@ -19,20 +19,20 @@ public class ReducerTask implements Task {
 
     @Override
     public void execute(TaskContext taskContext) {
-        Collection<Map<String, List<String>>> input = taskContext.getInput();
-
-        Map<String, List<String>> finalMap = new HashMap<>();
-        input.forEach(m -> {
-            m.entrySet().forEach((e) -> {
-                finalMap.merge(e.getKey(), e.getValue(), (l1, l2) -> {
-                    l1.addAll(l2);
-                    return l1;
-                });
-            });
-        });
-
-        Map<String, Object> aggregatedMap = aggregateEntires(finalMap, "sum");
-        emitOutput(aggregatedMap, taskContext);
+//        List<Map<String, List<String>>> input = taskContext.getInput(input);
+//
+//        Map<String, List<String>> finalMap = new HashMap<>();
+//        input.forEach(m -> {
+//            m.entrySet().forEach((e) -> {
+//                finalMap.merge(e.getKey(), e.getValue(), (l1, l2) -> {
+//                    l1.addAll(l2);
+//                    return l1;
+//                });
+//            });
+//        });
+//
+//        Map<String, Object> aggregatedMap = aggregateEntires(finalMap, "sum");
+//        emitOutput(aggregatedMap, taskContext);
     }
 
     private Map<String, Object> aggregateEntires(Map<String, List<String>> finalMap, String sum) {

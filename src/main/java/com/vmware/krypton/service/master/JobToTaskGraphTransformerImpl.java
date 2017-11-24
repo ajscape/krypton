@@ -5,7 +5,7 @@ import com.vmware.krypton.model.TaskDescription;
 import com.vmware.krypton.model.TaskGraph;
 import com.vmware.krypton.service.mappers.basic.DefaultMapper;
 import com.vmware.krypton.service.tasks.Combiner;
-import com.vmware.krypton.service.tasks.QueryTask;
+import com.vmware.krypton.service.tasks.InputQueryTask;
 import com.vmware.krypton.service.tasks.ReducerTask;
 import com.vmware.krypton.service.tasks.SplitterTask;
 
@@ -24,7 +24,7 @@ public class JobToTaskGraphTransformerImpl implements JobToTaskGraphTransformer 
     @Override
     public TaskGraph transformJobToTaskGraph(JobDescription jobDescription) {
         TaskGraph dag = new TaskGraph();
-        TaskDescription queryTask = new TaskDescription("1", QueryTask.class.getName());
+        TaskDescription queryTask = new TaskDescription("1", InputQueryTask.class.getName());
         queryTask.addInputTaskId("0");
         dag.addNode(queryTask);
 

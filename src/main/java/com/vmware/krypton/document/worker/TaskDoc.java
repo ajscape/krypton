@@ -11,6 +11,7 @@ public class TaskDoc extends ServiceDocument {
     public String taskName;
     public Set<String> inputTaskIds;
     public Set<String> outputTaskIds;
-    public Map<String, Object> inputTaskIdToDataMap;
+    public Map<String, String> inputTaskIdToDataMap;
+    public Map<String, Boolean> inputTaskIdToCompletionMap;
     public TaskState taskState;
 }
