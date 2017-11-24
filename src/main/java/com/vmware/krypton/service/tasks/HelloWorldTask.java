@@ -16,9 +16,7 @@ public class HelloWorldTask implements Task<Message, Message> {
     @Override
     public void execute(TaskContext<Message, Message> taskContext) {
         List<Message> messages = taskContext.getInput(Message.class);
-        logger.info("Hello World");
-        logger.info("Input Data = " + messages);
-
+        logger.info("{}: Executing task with data = {}", taskContext.getTaskDescription().getTaskId(), messages);
         taskContext.getTaskDescription().getOutputTaskIds().forEach(taskId ->
             messages.forEach(message -> taskContext.emitOutput(taskId, message))
         );

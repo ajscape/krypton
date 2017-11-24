@@ -66,13 +66,16 @@ public class TaskManagerImpl implements TaskManager {
     }
 
     @Override
-    public CompletableFuture<Void> receiveTaskInput(WorkerTaskData taskInput) {
+    public synchronized CompletableFuture<Void> receiveTaskInput(WorkerTaskData taskInput) {
         return getTaskDoc(taskInput.getDstTaskId()).thenCompose(taskDoc -> {
             String inputData = taskInput.getData();
             if (taskInput.isSrcTaskCompleted()) {
                 taskDoc.inputTaskIdToCompletionMap.put(taskInput.getSrcTaskId(), true);
+                logger.info("{}: Received completionEvent from {}", taskInput.getDstTaskId(), taskInput.getSrcTaskId());
+            } else {
+                taskDoc.inputTaskIdToDataMap.put(taskInput.getSrcTaskId(), inputData);
+                logger.info("{}: Received data from {}", taskInput.getDstTaskId(), taskInput.getSrcTaskId());
             }
-            taskDoc.inputTaskIdToDataMap.put(taskInput.getSrcTaskId(), inputData);
             return patchTaskDoc(taskDoc).thenCompose(aVoid -> {
                 //check if all input tasks completed
                 if (taskDoc.inputTaskIdToCompletionMap.keySet().size() == taskDoc.inputTaskIds.size()) {
@@ -94,9 +97,14 @@ public class TaskManagerImpl implements TaskManager {
 
     @Override
     public CompletableFuture<Void> sendTaskOutput(WorkerTaskData taskOutput) {
+        if(taskOutput.isSrcTaskCompleted()) {
+            logger.info("{}: Sending completionEvent to {}", taskOutput.getSrcTaskId(), taskOutput.getDstTaskId());
+        } else {
+            logger.info("{}: Sending data to {}", taskOutput.getSrcTaskId(), taskOutput.getDstTaskId());
+        }
         String hostName = taskIdToHostname(taskOutput.getDstTaskId());
         if (hostName == null) {
-            logger.error("Worker hostname not found for taskId " + taskOutput.getDstTaskId());
+            logger.error("{}: Unable to find hostname for {}", taskOutput.getSrcTaskId(), taskOutput.getDstTaskId());
             return CompletableFuture.completedFuture(null);
         }
         URI uri = URI.create(hostName + "/krypton/worker/task-input");
@@ -113,7 +121,7 @@ public class TaskManagerImpl implements TaskManager {
 
     @Override
     public CompletableFuture<Void> updateTaskState(String taskId, TaskState taskState) {
-        logger.info("Task state changed: taskId={} and state={}", taskId, taskState);
+        logger.info("{}: State changed to {}", taskId, taskState);
         if (taskState == TaskState.COMPLETED) {
             return handleTaskComplete(taskId);
         } else {
@@ -137,14 +145,14 @@ public class TaskManagerImpl implements TaskManager {
     }
 
     private CompletableFuture<Void> postTaskDoc(TaskDoc taskDoc) {
-        logger.info("Adding new Task: taskId={} and taskName={}", taskDoc.taskId, taskDoc.taskName);
+        //logger.info("Adding new Task: taskId={} and taskName={}", taskDoc.taskId, taskDoc.taskName);
         Operation op = Operation.createPost(host, TaskDocRepository.FACTORY_LINK)
                 .setBody(taskDoc);
         return sendOperation(host, op, null);
     }
 
     private CompletableFuture<Void> patchTaskDoc(TaskDoc taskDoc) {
-        logger.info("Updating Task: taskId={} and taskName={}", taskDoc.taskId, taskDoc.taskName);
+        //logger.info("Updating Task: taskId={} and taskName={}", taskDoc.taskId, taskDoc.taskName);
         Operation op = Operation.createPatch(host, taskIdToSelfLink(taskDoc.taskId))
                 .setBody(taskDoc);
         return sendOperation(host, op, null);
