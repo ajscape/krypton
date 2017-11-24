@@ -21,7 +21,7 @@ public class TaskContext<I, O> {
 
     public <T> List<T> getInput(Type type) {
         return (List<T>) inputTaskIdToDataMap.entrySet().stream()
-                .filter((entry -> inputTaskIdToCompletionMap.get(entry.getKey()) == null))
+                .filter(entry -> inputTaskIdToCompletionMap.get(entry.getKey()) == null)
                 .map(entry -> Utils.fromJson(entry.getValue(), type))
                 .collect(Collectors.toList());
     }
