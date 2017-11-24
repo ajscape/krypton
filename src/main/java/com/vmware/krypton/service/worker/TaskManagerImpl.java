@@ -26,11 +26,12 @@ import com.vmware.krypton.model.TaskState;
 import com.vmware.krypton.model.WorkerTaskData;
 import com.vmware.krypton.model.WorkerTaskSchedule;
 import com.vmware.krypton.repository.worker.TaskDocRepository;
-import com.vmware.krypton.service.mappers.basic.DefaultMapper;
+import com.vmware.krypton.service.mappers.basic.MapperTask;
 import com.vmware.krypton.service.tasks.Combiner;
 import com.vmware.krypton.service.tasks.HelloWorldTask;
 import com.vmware.krypton.service.tasks.OdataQueryTask;
 import com.vmware.krypton.service.tasks.ReducerTask;
+import com.vmware.krypton.service.tasks.SplitterTask;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
@@ -49,7 +50,8 @@ public class TaskManagerImpl implements TaskManager {
 
     public TaskManagerImpl() {
         taskNameToTaskMap.put(OdataQueryTask.class.getName(), new OdataQueryTask());
-        taskNameToTaskMap.put(DefaultMapper.class.getName(), new DefaultMapper());
+        taskNameToTaskMap.put(SplitterTask.class.getName(), new SplitterTask());
+        taskNameToTaskMap.put(MapperTask.class.getName(), new MapperTask());
         taskNameToTaskMap.put(ReducerTask.class.getName(), new ReducerTask());
         taskNameToTaskMap.put(Combiner.class.getName(), new Combiner());
         taskNameToTaskMap.put("helloWorld", new HelloWorldTask());
@@ -69,41 +71,44 @@ public class TaskManagerImpl implements TaskManager {
     }
 
     @Override
-    public synchronized CompletableFuture<Void> receiveTaskInput(WorkerTaskData taskInput) {
-        return getTaskDoc(taskInput.getDstTaskId()).thenCompose(taskDoc -> {
-            String inputData = taskInput.getData();
-            if (taskInput.isSrcTaskCompleted()) {
-                taskDoc.inputTaskIdToCompletionMap.put(taskInput.getSrcTaskId(), true);
-                logger.info("{}: Received completionEvent from {}", taskInput.getDstTaskId(), taskInput.getSrcTaskId());
-            } else {
-                taskDoc.inputTaskIdToDataMap.put(taskInput.getSrcTaskId(), inputData);
-                logger.info("{}: Received data from {}", taskInput.getDstTaskId(), taskInput.getSrcTaskId());
-            }
-            return patchTaskDoc(taskDoc).thenCompose(aVoid -> {
-                //check if all inputData tasks completed
-                if (taskDoc.inputTaskIdToCompletionMap.keySet().size() == taskDoc.inputTaskIds.size()) {
-                    //if yes, mark current task as complete
-                    return updateTaskState(taskInput.getDstTaskId(), TaskState.COMPLETED);
-                } else if (taskDoc.inputTaskIdToDataMap.keySet().size() == taskDoc.inputTaskIds.size()) {
-                    //else if all inputData data present, schedule the task for execution
-                    Task task = taskNameToTaskMap.get(taskDoc.taskName);
-                    TaskContext taskContext = taskDocToTaskContext(taskDoc);
-                    taskExecutor.executeTask(task, taskContext);
-                    return CompletableFuture.completedFuture(null);
+    public CompletableFuture<Void> receiveTaskInput(WorkerTaskData taskInput) {
+        synchronized (TaskManagerImpl.class) {
+            getTaskDoc(taskInput.getDstTaskId()).thenCompose(taskDoc -> {
+                String inputData = taskInput.getData();
+                if (taskInput.isSrcTaskCompleted()) {
+                    taskDoc.inputTaskIdToCompletionMap.put(taskInput.getSrcTaskId(), true);
+                    logger.info("Task {}: Received completionEvent from {}", taskInput.getDstTaskId(), taskInput.getSrcTaskId());
                 } else {
-                    // wait for all inputData data to arrive
+                    taskDoc.inputTaskIdToDataMap.put(taskInput.getSrcTaskId(), inputData);
+                    logger.info("Task {}: Received data from {} - {}", taskInput.getDstTaskId(), taskInput.getSrcTaskId(), inputData);
                 }
-                return CompletableFuture.completedFuture(null);
-            });
-        });
+                return patchTaskDoc(taskDoc).thenCompose(aVoid -> {
+                    //check if all inputData tasks completed
+                    if (taskDoc.inputTaskIdToCompletionMap.keySet().size() == taskDoc.inputTaskIds.size()) {
+                        //if yes, mark current task as complete
+                        return updateTaskState(taskInput.getDstTaskId(), TaskState.COMPLETED);
+                    } else if (taskDoc.inputTaskIdToDataMap.keySet().size() == taskDoc.inputTaskIds.size()) {
+                        //else if all inputData data present, schedule the task for execution
+                        Task task = taskNameToTaskMap.get(taskDoc.taskName);
+                        TaskContext taskContext = taskDocToTaskContext(taskDoc);
+                        taskExecutor.executeTask(task, taskContext);
+                        return CompletableFuture.completedFuture(null);
+                    } else {
+                        // wait for all inputData data to arrive
+                    }
+                    return CompletableFuture.completedFuture(null);
+                });
+            }).join();
+        }
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override
     public CompletableFuture<Void> sendTaskOutput(WorkerTaskData taskOutput) {
         if(taskOutput.isSrcTaskCompleted()) {
-            logger.info("{}: Sending completionEvent to {}", taskOutput.getSrcTaskId(), taskOutput.getDstTaskId());
+            logger.info("Task {}: Sending completionEvent to {}", taskOutput.getSrcTaskId(), taskOutput.getDstTaskId());
         } else {
-            logger.info("{}: Sending data to {}", taskOutput.getSrcTaskId(), taskOutput.getDstTaskId());
+            logger.info("Task {}: Sending data to {}", taskOutput.getSrcTaskId(), taskOutput.getDstTaskId());
         }
         if(taskOutput.getDstTaskId().equals(MASTER_TASK_ID)) {
             JobResult jobResult = new JobResult(taskOutput.getJobId(), true, true, taskOutput.getData(), null);
@@ -111,7 +116,7 @@ public class TaskManagerImpl implements TaskManager {
         }
         String hostName = taskIdToHostnameMap.get(taskOutput.getDstTaskId());
         if (hostName == null) {
-            logger.error("{}: Unable to find hostname for {}", taskOutput.getSrcTaskId(), taskOutput.getDstTaskId());
+            logger.error("Task {}: Unable to find hostname for {}", taskOutput.getSrcTaskId(), taskOutput.getDstTaskId());
             JobResult jobResult = new JobResult(taskOutput.getJobId(), true, false, null,
                     "Unable to find hostname for " + taskOutput.getDstTaskId());
             return sendJobResult(jobResult);
@@ -130,7 +135,7 @@ public class TaskManagerImpl implements TaskManager {
 
     @Override
     public CompletableFuture<Void> updateTaskState(String taskId, TaskState taskState) {
-        logger.info("{}: State changed to {}", taskId, taskState);
+//        logger.info("Task {}: State changed to {}", taskId, taskState);
         if (taskState == TaskState.COMPLETED) {
             return handleTaskComplete(taskId);
         } else {

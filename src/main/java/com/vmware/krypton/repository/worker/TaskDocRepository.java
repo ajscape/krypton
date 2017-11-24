@@ -9,8 +9,8 @@ public class TaskDocRepository extends StatefulService {
 
     public TaskDocRepository() {
         super(TaskDoc.class);
-//        toggleOption(ServiceOption.REPLICATION, true);
-//        toggleOption(ServiceOption.OWNER_SELECTION, true);
+        toggleOption(ServiceOption.REPLICATION, true);
+        toggleOption(ServiceOption.OWNER_SELECTION, true);
     }
 
     @Override

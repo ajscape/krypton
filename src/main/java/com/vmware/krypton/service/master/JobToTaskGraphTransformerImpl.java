@@ -3,7 +3,7 @@ package com.vmware.krypton.service.master;
 import com.vmware.krypton.controller.master.JobDescription;
 import com.vmware.krypton.model.TaskDescription;
 import com.vmware.krypton.model.TaskGraph;
-import com.vmware.krypton.service.mappers.basic.DefaultMapper;
+import com.vmware.krypton.service.mappers.basic.MapperTask;
 import com.vmware.krypton.service.tasks.Combiner;
 import com.vmware.krypton.service.tasks.OdataQueryTask;
 import com.vmware.krypton.service.tasks.ReducerTask;
@@ -42,8 +42,8 @@ public class JobToTaskGraphTransformerImpl implements JobToTaskGraphTransformer 
         dag.addEdge("1", Arrays.asList(splitterTask));
 
         IntStream.rangeClosed(3, getNumberOfNodes() + 2)
-                .forEach(taskIdInt -> dag.addNode(new TaskDescription(jobId,Objects.toString(taskIdInt), DefaultMapper.class.getName())));
-        List<TaskDescription> mapperTasks = dag.getNodesByName(DefaultMapper.class.getName());
+                .forEach(taskIdInt -> dag.addNode(new TaskDescription(jobId,Objects.toString(taskIdInt), MapperTask.class.getName())));
+        List<TaskDescription> mapperTasks = dag.getNodesByName(MapperTask.class.getName());
         dag.addEdge("2", mapperTasks);
 
         IntStream.rangeClosed(dag.size() + 1, getNumberOfNodes() + dag.size())

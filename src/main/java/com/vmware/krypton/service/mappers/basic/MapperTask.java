@@ -1,5 +1,6 @@
 package com.vmware.krypton.service.mappers.basic;
 
+import com.vmware.krypton.host.TestService.TestState;
 import com.vmware.krypton.model.Task;
 import com.vmware.krypton.model.TaskContext;
 import com.vmware.krypton.service.mappers.Mapper;
@@ -17,14 +18,14 @@ import java.util.stream.Collectors;
 /**
  * Created by sivarajm on 11/23/2017.
  */
-public class DefaultMapper implements Mapper<DefaultInput>, Task<DefaultInput, Map<String, List<Object>>>  {
+public class MapperTask implements Mapper<DefaultInput>, Task<DefaultInput, Map<String, List<Object>>>  {
 
   @Override
   public Object map(DefaultInput input) throws MapperException {
 
     Map<String, List<Object>> resultMap = new HashMap<>();
 
-    for (ServiceDocument document : input.documents) {
+    for (TestState document : input.documents) {
       for (String fieldName : input.getExtractDataMembers()) {
         try {
           Class aClass = document.getClass();
@@ -43,12 +44,12 @@ public class DefaultMapper implements Mapper<DefaultInput>, Task<DefaultInput, M
   }
 
   @Override
-  public void execute(TaskContext taskContext) {
+  public void execute(TaskContext<DefaultInput, Map<String, List<Object>>> taskContext) {
 
     DefaultInput defaultInput = new DefaultInput();
     List<DefaultInput> flatDefaultInput = taskContext.getInput(DefaultInput.class);
     //List<DefaultInput> flatDefaultInput = input1.stream().flatMap(r -> r.stream()).collect(Collectors.toList());
-    List<? extends ServiceDocument> documents = flatDefaultInput.stream().map(d -> d.getDocuments()).flatMap(s -> s.stream()).collect(Collectors.toList());
+    List<TestState> documents = flatDefaultInput.stream().map(d -> d.getDocuments()).flatMap(s -> s.stream()).collect(Collectors.toList());
 
     Map<String, List<Object>> resultMap = new HashMap<>();
     if(flatDefaultInput.size() > 0) {
@@ -65,7 +66,7 @@ public class DefaultMapper implements Mapper<DefaultInput>, Task<DefaultInput, M
     emitOutput(resultMap, taskContext);
   }
 
-  private void emitOutput(Map<String, List<Object>> resultMap,TaskContext taskContext) {
+  private void emitOutput(Map<String, List<Object>> resultMap, TaskContext<DefaultInput, Map<String, List<Object>>> taskContext) {
 
     List<String> outputTaksIds = new ArrayList<String>(taskContext.getTaskDescription().getOutputTaskIds());
     if(outputTaksIds.size() > 1) {
@@ -80,9 +81,16 @@ public class DefaultMapper implements Mapper<DefaultInput>, Task<DefaultInput, M
         });
       });
 
-      outputSplit.forEach((k,v) -> {
-        taskContext.emitOutput(k, v);
+      taskContext.getTaskDescription().getOutputTaskIds().forEach(outputTaskId -> {
+        Map<String, List<Object>> output = outputSplit.get(outputTaskId);
+        if(output == null) {
+          output = new HashMap<>();
+        }
+        taskContext.emitOutput(outputTaskId, output);
       });
+//      outputSplit.forEach((k,v) -> {
+//        taskContext.emitOutput(k, v);
+//      });
     } else if (outputTaksIds.size() == 1){
       taskContext.emitOutput(outputTaksIds.get(0), resultMap);
     } else {

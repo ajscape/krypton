@@ -1,5 +1,6 @@
 package com.vmware.krypton.service.mappers.basic;
 
+import com.vmware.krypton.host.TestService.TestState;
 import com.vmware.krypton.service.mappers.MapInput;
 import com.vmware.xenon.common.ServiceDocument;
 import java.util.List;
@@ -18,6 +19,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DefaultInput extends MapInput {
-  List<? extends ServiceDocument> documents;
+  List<TestState> documents;
   private List<String> extractDataMembers;
 }

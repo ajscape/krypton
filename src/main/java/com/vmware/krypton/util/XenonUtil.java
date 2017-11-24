@@ -12,7 +12,7 @@ public class XenonUtil {
 
     public static int getNumberOfNodes() {
         //TODO Implement....
-        return 3;
+        return 2;
     }
 
     public static <R> CompletableFuture<R> sendOperation(ServiceHost host, Operation op, Class<? extends R> resultClass) {

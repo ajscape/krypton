@@ -5,36 +5,33 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-import com.vmware.krypton.service.mappers.basic.DefaultInput;
-import com.vmware.xenon.common.ServiceDocument;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.vmware.krypton.model.TaskContext;
-import com.vmware.krypton.model.TaskDescription;
-import com.vmware.krypton.service.mappers.basic.DefaultMapper;
-import com.vmware.krypton.service.worker.TaskManager;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.vmware.krypton.host.TestService.TestState;
+import com.vmware.krypton.model.TaskContext;
+import com.vmware.krypton.model.TaskDescription;
+import com.vmware.krypton.service.mappers.basic.DefaultInput;
+import com.vmware.krypton.service.mappers.basic.MapperTask;
+import com.vmware.krypton.service.worker.TaskManager;
+import com.vmware.xenon.common.ServiceDocument;
 
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultMapperTest {
+public class MapperTaskTest {
 
-    private DefaultMapper defaultMapper;
+    private MapperTask mapperTask;
 
     private TaskManager taskManager;
 
@@ -44,10 +41,10 @@ public class DefaultMapperTest {
     @Test
     public void testMapper() {
         taskManager = mock(TaskManager.class);
-        defaultMapper = new DefaultMapper();
+        mapperTask = new MapperTask();
         Mockito.when(taskContext.getInput(any())).thenReturn(getMapperInput());
         Mockito.when(taskContext.getTaskDescription()).thenReturn(getTaskDescription());
-        defaultMapper.execute(taskContext);
+        mapperTask.execute(taskContext);
         ArgumentCaptor<TaskContext> argumentCaptor = ArgumentCaptor.forClass(TaskContext.class);
         doNothing().when(taskContext).emitOutput(any(), any());
         verify(taskContext, times(2)).emitOutput(Mockito.anyString(),argumentCaptor.capture());
@@ -84,10 +81,10 @@ public class DefaultMapperTest {
     }
 
 
-    private List<? extends ServiceDocument> getDocuments() {
-        List<TestState1> serviceDocuments = new ArrayList<>();
-        serviceDocuments.add(new TestState1("1", "2"));
-        serviceDocuments.add(new TestState1("3", "4"));
+    private List<TestState> getDocuments() {
+        List<TestState> serviceDocuments = new ArrayList<>();
+        serviceDocuments.add(new TestState());
+        serviceDocuments.add(new TestState());
         return serviceDocuments;
     }
 }

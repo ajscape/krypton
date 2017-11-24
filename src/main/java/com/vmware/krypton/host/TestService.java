@@ -11,7 +11,7 @@ public class TestService extends StatefulService {
     public static final String FACTORY_LINK = "/test";
 
     public static class TestState extends ServiceDocument {
-        public String message;
+        public Integer cost;
     }
 
     public TestService() {

@@ -44,7 +44,7 @@ public class JobManagerImpl implements JobManager {
     @Inject
     private ServiceHost host;
 
-    private Map<String, CompletableFuture<JobResult>> jobIdToResultFutureMap = new HashMap<>();
+    private static Map<String, CompletableFuture<JobResult>> jobIdToResultFutureMap = new HashMap<>();
 
     @Override
     public CompletableFuture<JobResult> executeJob(JobDescription job) {

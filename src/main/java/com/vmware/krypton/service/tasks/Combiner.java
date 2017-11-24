@@ -1,5 +1,7 @@
 package com.vmware.krypton.service.tasks;
 
+import static com.vmware.krypton.service.master.JobToTaskGraphTransformerImpl.MASTER_TASK_ID;
+
 import com.vmware.krypton.model.Task;
 import com.vmware.krypton.model.TaskContext;
 
@@ -9,9 +11,9 @@ import java.util.stream.Collectors;
 /**
  * Created by nibunangs on 23-Nov-2017.
  */
-public class Combiner implements Task<Map<String, List<Object>>, Map<String, List<Object>>> {
+public class Combiner implements Task<Map<String, Object>, Map<String, Object>> {
 
-    private Collection<Map<String, Object>> inputType;
+    private Map<String, Object> inputType;
 
     @Override
     public void execute(TaskContext taskContext) {
@@ -20,7 +22,7 @@ public class Combiner implements Task<Map<String, List<Object>>, Map<String, Lis
         Map<String, Object> output = new HashMap<>();
         inputs.stream().forEach(stringObjectMap -> output.putAll(stringObjectMap));
 
-        taskContext.emitOutput("0", output);
+        taskContext.emitOutput(MASTER_TASK_ID, output);
     }
 
     public void executeTemp(TaskContext taskContext) {
@@ -42,7 +44,7 @@ public class Combiner implements Task<Map<String, List<Object>>, Map<String, Lis
     }
 
     private List<Map<String, Object>> getInput(TaskContext taskContext) {
-        Collection<Map<String, List<Object>>> input = null;
+        List<Map<String, Object>> input = null;
         try {
             input = taskContext
                     .getInput(Combiner.class.getDeclaredField("inputType").getGenericType());
