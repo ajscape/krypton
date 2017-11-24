@@ -9,5 +9,5 @@ import lombok.ToString;
  */
 @Getter@Setter@ToString
 public class JobDescription {
-    public String queryTask, mapper, Reducer;
+    public String jobId, queryTask, mapper, Reducer;
 }

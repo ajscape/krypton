@@ -24,6 +24,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 public class JobController extends JaxRsBridgeStatelessService{
 
     public static final String SELF_LINK = "/krypton/job";
+    public static final String WORKER_SAVE_RESULT = "/internal/save-result";
 
     @Inject
     private JobManager jobManager;
@@ -41,7 +42,7 @@ public class JobController extends JaxRsBridgeStatelessService{
     }
 
     @POST
-    @Path("/internal/save-result")
+    @Path(WORKER_SAVE_RESULT)
     public CompletableFuture<Void> postJobResult(JobResult jobResult) {
         return jobManager.saveJobResult(jobResult);
     }

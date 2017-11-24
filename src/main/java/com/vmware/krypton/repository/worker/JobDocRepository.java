@@ -13,4 +13,17 @@ public class JobDocRepository extends StatefulService {
         toggleOption(ServiceOption.REPLICATION, true);
         toggleOption(ServiceOption.OWNER_SELECTION, true);
     }
+
+    @Override
+    public void handlePatch(Operation patch) {
+        JobDoc jobDoc = patch.getBody(JobDoc.class);
+        JobDoc currentState = getState(patch);
+        currentState.success = jobDoc.success;
+        currentState.result = jobDoc.result;
+        currentState.isCompleted = jobDoc.isCompleted;
+        currentState.errorMessage = jobDoc.errorMessage;
+        setState(patch, currentState);
+        patch.setBody(currentState);
+        patch.complete();
+    }
 }

@@ -8,6 +8,7 @@ import com.vmware.krypton.model.TaskGraph;
 import com.vmware.krypton.model.WorkerTaskSchedule;
 
 public interface WorkerTaskScheduleGenerator {
+     String MASTER_TASK_ID = "__MASTER__";
 
      CompletableFuture<List<WorkerTaskSchedule>> generateWorkerTaskSchedules(TaskGraph taskGraph);
 }

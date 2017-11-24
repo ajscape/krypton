@@ -1,11 +1,16 @@
 package com.vmware.krypton.controller.master;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class JobResult {
-    private String jobId;
-    private String result;
-    private boolean success;
+    public String jobId;
+    public boolean isCompleted;
+    public boolean success;
+    public String result;
     private String errorMessage;
 }

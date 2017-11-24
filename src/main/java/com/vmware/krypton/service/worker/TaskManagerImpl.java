@@ -1,5 +1,6 @@
 package com.vmware.krypton.service.worker;
 
+import static com.vmware.krypton.service.master.WorkerTaskScheduleGenerator.MASTER_TASK_ID;
 import static com.vmware.krypton.util.XenonUtil.sendOperation;
 
 import java.net.URI;
@@ -14,6 +15,7 @@ import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.vmware.krypton.controller.master.JobResult;
 import com.vmware.krypton.document.worker.TaskDoc;
 import com.vmware.krypton.model.Task;
 import com.vmware.krypton.model.TaskContext;
@@ -21,6 +23,7 @@ import com.vmware.krypton.model.TaskDescription;
 import com.vmware.krypton.model.TaskState;
 import com.vmware.krypton.model.WorkerTaskData;
 import com.vmware.krypton.model.WorkerTaskSchedule;
+import com.vmware.krypton.repository.worker.JobDocRepository;
 import com.vmware.krypton.repository.worker.TaskDocRepository;
 import com.vmware.krypton.service.mappers.basic.DefaultMapper;
 import com.vmware.krypton.service.tasks.Combiner;
@@ -101,10 +104,16 @@ public class TaskManagerImpl implements TaskManager {
         } else {
             logger.info("{}: Sending data to {}", taskOutput.getSrcTaskId(), taskOutput.getDstTaskId());
         }
+        if(taskOutput.getDstTaskId().equals(MASTER_TASK_ID)) {
+            JobResult jobResult = new JobResult(taskOutput.getJobId(), true, true, taskOutput.getData(), null);
+            return sendJobResult(jobResult);
+        }
         String hostName = taskIdToHostnameMap.get(taskOutput.getDstTaskId());
         if (hostName == null) {
             logger.error("{}: Unable to find hostname for {}", taskOutput.getSrcTaskId(), taskOutput.getDstTaskId());
-            return CompletableFuture.completedFuture(null);
+            JobResult jobResult = new JobResult(taskOutput.getJobId(), true, false, null,
+                    "Unable to find hostname for " + taskOutput.getDstTaskId());
+            return sendJobResult(jobResult);
         }
         URI uri = URI.create(hostName + "/krypton/worker/task-input");
         Operation op = Operation.createPost(uri).setBody(taskOutput);
@@ -180,8 +189,15 @@ public class TaskManagerImpl implements TaskManager {
         return sendOperation(host, op, null);
     }
 
+    private CompletableFuture<Void> sendJobResult(JobResult jobResult) {
+        Operation op = Operation.createPatch(host, JobDocRepository.FACTORY_LINK + "/" + jobResult.getJobId())
+                .setBody(jobResult);
+        return sendOperation(host, op, null);
+    }
+
     private static TaskDoc taskDescriptionToTaskDoc(TaskDescription taskDescription) {
         TaskDoc taskDoc = new TaskDoc();
+        taskDoc.jobId = taskDescription.getJobId();
         taskDoc.taskId = taskDescription.getTaskId();
         taskDoc.taskName = taskDescription.getTaskName();
         taskDoc.inputTaskIds = taskDescription.getInputTaskIds();

@@ -6,6 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class WorkerTaskData {
+    private String jobId;
     private String data;
     private String srcTaskId;
     private String dstTaskId;

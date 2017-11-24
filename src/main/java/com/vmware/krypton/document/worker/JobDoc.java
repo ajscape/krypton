@@ -7,5 +7,5 @@ public class JobDoc extends ServiceDocument {
     public boolean isCompleted;
     public boolean success;
     public String result;
-    private String errorMessage;
+    public String errorMessage;
 }

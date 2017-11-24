@@ -44,7 +44,7 @@ public class JobManagerImpl implements JobManager {
 
     @Override
     public CompletableFuture<JobResult> executeJob(JobDescription job) {
-        String jobId = UUID.randomUUID().toString();
+        String jobId = (job.getJobId() != null) ? job.getJobId() : UUID.randomUUID().toString();
         log.info("Received job {} with id={}", job, jobId);
         log.info("Going to create a DAG for {}", job);
         TaskGraph taskGraph = transformer.transformJobToTaskGraph(job);
