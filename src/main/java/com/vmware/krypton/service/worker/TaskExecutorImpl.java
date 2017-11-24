@@ -20,7 +20,11 @@ public class TaskExecutorImpl implements TaskExecutor {
         executorService.execute(new Runnable() {
             public void run() {
                 taskContext.updateTaskState(TaskState.RUNNING);
-                task.execute(taskContext);
+                try {
+                    task.execute(taskContext);
+                } catch (NoSuchFieldException e) {
+                    e.printStackTrace();
+                }
                 taskContext.updateTaskState(TaskState.PARTIAL_COMPLETED);
             }
         });

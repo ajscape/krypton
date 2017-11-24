@@ -13,27 +13,35 @@ import java.util.Map;
  */
 public class Combiner implements Task<Map<String, List<Object>>, Map<String, List<Object>>> {
 
+    private Collection<Map<String, List<Object>>> inputType;
+
     @Override
     public void execute(TaskContext taskContext) {
 
-//        Collection<Map<String, List<Object>>> input = taskContext.getInput();
-//        List<String> outputTaksIds = new ArrayList<String>(taskContext.getTaskDescription().getOutputTaskIds());
-//
-//        List<Map<String, List<Object>>> maps = new ArrayList<>(input);
-//
-//        Map<String, List<Object>> output = new HashMap<>();
-//
-//        maps.forEach( item -> {
-//            item.forEach((k,v)->{
-//                output.computeIfPresent(k, (k1, v1) -> {
-//                    v1.addAll(v);
-//                    return v1;
-//                });
-//
-//                output.computeIfAbsent(k, k1 -> v);
-//            });
-//        });
-//
-//        taskContext.emitOutput(outputTaksIds.get(0), output);
+        Collection<Map<String, List<Object>>> input = null;
+        try {
+            input = taskContext
+                    .getInput(Combiner.class.getDeclaredField("inputType").getGenericType());
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+        List<String> outputTaksIds = new ArrayList<String>(taskContext.getTaskDescription().getOutputTaskIds());
+
+        List<Map<String, List<Object>>> maps = new ArrayList<>(input);
+
+        Map<String, List<Object>> output = new HashMap<>();
+
+        maps.forEach( item -> {
+            item.forEach((k,v)->{
+                output.computeIfPresent(k, (k1, v1) -> {
+                    v1.addAll(v);
+                    return v1;
+                });
+
+                output.computeIfAbsent(k, k1 -> v);
+            });
+        });
+
+        taskContext.emitOutput(outputTaksIds.get(0), output);
     }
 }
