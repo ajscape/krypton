@@ -68,19 +68,19 @@ public class ReducerTask implements Task {
     }
 //For Testing Reducer function
 //    public static void main(String[] args) {
-//        Collection<Map<String, List<String>>> input = new ArrayList<>();
+//        Collection<Map<String, List<String>>> inputData = new ArrayList<>();
 //        Map<String, List<String>> m1 = new HashMap<>();
 //        Map<String, List<String>> m2 = new HashMap<>();
 //        m1.put("a", Arrays.asList("1","2" , "3"));
 //        m1.put("b", Arrays.asList("12","3","4"));
 //        m2.put("a", Arrays.asList("4", "5" , "6"));
 //        m2.put("b", Arrays.asList("4","5"));
-//        input.add(m1);
-//        input.add(m2);
+//        inputData.add(m1);
+//        inputData.add(m2);
 //
 //        Map<String, List<String>> finalMap = new HashMap<>();
 //
-//        input.stream().forEach(m -> {
+//        inputData.stream().forEach(m -> {
 //            m.entrySet().forEach((e) -> {
 //                finalMap.merge(e.getKey(), e.getValue(), (l1, l2) -> {
 //                    ArrayList<String> l3 = new ArrayList<>();

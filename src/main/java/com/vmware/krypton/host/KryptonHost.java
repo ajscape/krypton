@@ -2,6 +2,7 @@ package com.vmware.krypton.host;
 
 import com.vmware.krypton.controller.master.JobController;
 import com.vmware.krypton.controller.worker.WorkerTaskController;
+import com.vmware.krypton.repository.worker.JobDocRepository;
 import com.vmware.krypton.repository.worker.TaskDocRepository;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.ext.jee.consumer.JaxRsServiceClient;
@@ -26,6 +27,7 @@ public class KryptonHost {
         hostBuilder.withStatelessService(new WorkerTaskController());
 
         hostBuilder.withStatefulService(new TaskDocRepository());
+        hostBuilder.withStatefulService(new JobDocRepository());
         hostBuilder.withStatefulService(new TestService());
 
         InjectableHost injectableHost = hostBuilder.buildAndStart();

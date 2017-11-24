@@ -27,11 +27,11 @@ public class WorkerTaskSchedulerTest {
 
     private TaskGraph getTaskGraph() {
         TaskGraph taskGraph = new TaskGraph();
-        taskGraph.addNode(new TaskDescription("t1", "a"));
-        taskGraph.addNode(new TaskDescription("t2", "b"));
-        taskGraph.addNode(new TaskDescription("t3", "c"));
-        taskGraph.addNode(new TaskDescription("t4", "d"));
-        taskGraph.addNode(new TaskDescription("t5", "e"));
+        taskGraph.addNode(new TaskDescription("J1", "t1", "a"));
+        taskGraph.addNode(new TaskDescription("J1", "t2", "b"));
+        taskGraph.addNode(new TaskDescription("J1", "t3", "c"));
+        taskGraph.addNode(new TaskDescription("J1", "t4", "d"));
+        taskGraph.addNode(new TaskDescription("J1", "t5", "e"));
         return taskGraph;
     }
 

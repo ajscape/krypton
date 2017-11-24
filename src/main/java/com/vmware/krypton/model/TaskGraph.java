@@ -1,6 +1,7 @@
 package com.vmware.krypton.model;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -11,10 +12,12 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Getter
+@Setter
 @ToString
 public class TaskGraph {
 
     private Map<String, TaskDescription> nodes = new ConcurrentHashMap<>();
+    private String inputTaskId;
 
     public void addNode(TaskDescription taskNode) {
         nodes.putIfAbsent(taskNode.getTaskId(), taskNode);
@@ -30,6 +33,11 @@ public class TaskGraph {
         sourceTask.addOutputTaskIds(destNodes.stream().map(TaskDescription::getTaskId).collect(Collectors.toList()));
 
         destNodes.forEach(destTaskDes -> destTaskDes.addInputTaskId(sourceNodeId));
+    }
+
+    public void addDirectedEdge(String sourceNodeId, List<String> destNodeIds) {
+        TaskDescription sourceTask = nodes.get(sourceNodeId);
+        sourceTask.addOutputTaskIds(destNodeIds);
     }
 
     public int size() {

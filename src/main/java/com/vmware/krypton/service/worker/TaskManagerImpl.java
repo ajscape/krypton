@@ -1,6 +1,6 @@
 package com.vmware.krypton.service.worker;
 
-import static com.vmware.krypton.service.master.WorkerTaskScheduleGenerator.MASTER_TASK_ID;
+import static com.vmware.krypton.service.master.JobToTaskGraphTransformerImpl.MASTER_TASK_ID;
 import static com.vmware.krypton.util.XenonUtil.sendOperation;
 
 import java.net.URI;
@@ -79,18 +79,18 @@ public class TaskManagerImpl implements TaskManager {
                 logger.info("{}: Received data from {}", taskInput.getDstTaskId(), taskInput.getSrcTaskId());
             }
             return patchTaskDoc(taskDoc).thenCompose(aVoid -> {
-                //check if all input tasks completed
+                //check if all inputData tasks completed
                 if (taskDoc.inputTaskIdToCompletionMap.keySet().size() == taskDoc.inputTaskIds.size()) {
                     //if yes, mark current task as complete
                     return updateTaskState(taskInput.getDstTaskId(), TaskState.COMPLETED);
                 } else if (taskDoc.inputTaskIdToDataMap.keySet().size() == taskDoc.inputTaskIds.size()) {
-                    //else if all input data present, schedule the task for execution
+                    //else if all inputData data present, schedule the task for execution
                     Task task = taskNameToTaskMap.get(taskDoc.taskName);
                     TaskContext taskContext = taskDocToTaskContext(taskDoc);
                     taskExecutor.executeTask(task, taskContext);
                     return CompletableFuture.completedFuture(null);
                 } else {
-                    // wait for all input data to arrive
+                    // wait for all inputData data to arrive
                 }
                 return CompletableFuture.completedFuture(null);
             });
@@ -233,6 +233,7 @@ public class TaskManagerImpl implements TaskManager {
         return getTaskDoc(taskId).thenCompose(taskDoc -> {
             taskDoc.outputTaskIds.forEach(outputTaskId -> {
                 WorkerTaskData taskOutput = new WorkerTaskData();
+                taskOutput.setJobId(taskDoc.jobId);
                 taskOutput.setSrcTaskId(taskId);
                 taskOutput.setDstTaskId(outputTaskId);
                 taskOutput.setData("");

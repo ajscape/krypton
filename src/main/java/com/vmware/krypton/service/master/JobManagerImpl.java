@@ -3,9 +3,11 @@ package com.vmware.krypton.service.master;
 import com.spotify.futures.CompletableFutures;
 import com.vmware.krypton.controller.master.JobDescription;
 import com.vmware.krypton.controller.master.JobResult;
+import com.vmware.krypton.controller.worker.WorkerTaskController;
 import com.vmware.krypton.document.worker.JobDoc;
 import com.vmware.krypton.model.TaskGraph;
 import com.vmware.krypton.model.TaskState;
+import com.vmware.krypton.model.WorkerTaskData;
 import com.vmware.krypton.model.WorkerTaskSchedule;
 import com.vmware.krypton.repository.worker.JobDocRepository;
 import com.vmware.xenon.common.Operation;
@@ -22,7 +24,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static com.vmware.krypton.controller.worker.WorkerTaskController.SELF_LINK;
+import static com.vmware.krypton.controller.worker.WorkerTaskController.TASK_INPUT;
 import static com.vmware.krypton.controller.worker.WorkerTaskController.TASK_SCHEDULE;
+import static com.vmware.krypton.service.master.JobToTaskGraphTransformerImpl.MASTER_TASK_ID;
 import static com.vmware.krypton.util.XenonUtil.sendOperation;
 
 /**
@@ -48,6 +52,7 @@ public class JobManagerImpl implements JobManager {
         log.info("Received job {} with id={}", job, jobId);
         log.info("Going to create a DAG for {}", job);
         TaskGraph taskGraph = transformer.transformJobToTaskGraph(job);
+        String inputTaskId = taskGraph.getInputTaskId();
         log.info("Task Graph[{}] has been created for {}", taskGraph, job);
         CompletableFuture<List<WorkerTaskSchedule>> workerSchedulesCF = generator.generateWorkerTaskSchedules(taskGraph);
         return workerSchedulesCF.thenCompose(workerTaskSchedules -> {
@@ -59,6 +64,14 @@ public class JobManagerImpl implements JobManager {
             JobDoc jobDoc = createJobDoc(jobId);
             Operation op = Operation.createPost(host, JobDocRepository.FACTORY_LINK).setBody(jobDoc);
             return sendOperation(host, op, JobResult.class);
+        }).thenCompose(jobResult -> {
+            WorkerTaskData taskData = new WorkerTaskData();
+            taskData.setJobId(jobId);
+            taskData.setSrcTaskId(MASTER_TASK_ID);
+            taskData.setDstTaskId(inputTaskId);
+            taskData.setData(job.getInputData());
+            Operation op = Operation.createPost(host, WorkerTaskController.SELF_LINK + TASK_INPUT).setBody(taskData);
+            return sendOperation(host, op, null).thenApply(aVoid -> jobResult);
         });
     }
 

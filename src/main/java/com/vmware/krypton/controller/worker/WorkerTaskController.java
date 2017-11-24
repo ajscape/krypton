@@ -27,6 +27,7 @@ public class WorkerTaskController extends JaxRsBridgeStatelessService {
 
     public static final String SELF_LINK = "/krypton/worker";
     public static final String TASK_SCHEDULE = "/task-schedule";
+    public static final String TASK_INPUT = "/task-input";
 
     @Inject
     private TaskManager taskManager;
@@ -38,7 +39,7 @@ public class WorkerTaskController extends JaxRsBridgeStatelessService {
     }
 
     @POST
-    @Path("/task-input")
+    @Path(TASK_INPUT)
     public CompletableFuture<Void> postWorkerTaskInput(@OperationBody WorkerTaskData taskInput) {
         return taskManager.receiveTaskInput(taskInput);
     }

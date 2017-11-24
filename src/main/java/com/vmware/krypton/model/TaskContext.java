@@ -28,6 +28,7 @@ public class TaskContext<I, O> {
 
     public void emitOutput(String outputTaskId, O output) {
         WorkerTaskData taskOutput = new WorkerTaskData();
+        taskOutput.setJobId(taskDescription.getJobId());
         taskOutput.setSrcTaskId(taskDescription.getTaskId());
         taskOutput.setDstTaskId(outputTaskId);
         taskOutput.setData(Utils.toJson(output));
