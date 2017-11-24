@@ -5,7 +5,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatefulService;
 
 public class TaskDocRepository extends StatefulService {
-    public static final String FACTORY_LINK = "/krypton/task";
+    public static final String FACTORY_LINK = "/krypton/worker/data/task";
 
     public TaskDocRepository() {
         super(TaskDoc.class);

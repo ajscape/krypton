@@ -9,6 +9,7 @@ import java.util.Map;
 import com.vmware.krypton.model.TaskDescription;
 import com.vmware.krypton.model.TaskGraph;
 import com.vmware.krypton.model.WorkerTaskSchedule;
+import com.vmware.krypton.service.master.WorkerTaskScheduleGeneratorImpl;
 import com.vmware.xenon.common.ServiceHost;
 
 /**

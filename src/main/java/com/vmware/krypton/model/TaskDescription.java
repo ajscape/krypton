@@ -15,6 +15,7 @@ import lombok.ToString;
 @RequiredArgsConstructor
 @ToString
 public class TaskDescription {
+    private final String jobId;
     private final String taskId;
     private final String taskName;
     private Set<String> inputTaskIds = new HashSet<>();

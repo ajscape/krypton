@@ -7,6 +7,7 @@ import com.vmware.krypton.model.TaskState;
 import com.vmware.xenon.common.ServiceDocument;
 
 public class TaskDoc extends ServiceDocument {
+    public String jobId;
     public String taskId;
     public String taskName;
     public Set<String> inputTaskIds;

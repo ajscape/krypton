@@ -194,7 +194,7 @@ public class TaskManagerImpl implements TaskManager {
     }
 
     private static TaskDescription taskDocToTaskDescription(TaskDoc taskDoc) {
-        TaskDescription taskDescription = new TaskDescription(taskDoc.taskId, taskDoc.taskName);
+        TaskDescription taskDescription = new TaskDescription(taskDoc.jobId, taskDoc.taskId, taskDoc.taskName);
         taskDescription.setInputTaskIds(taskDoc.inputTaskIds);
         taskDescription.setOutputTaskIds(taskDoc.outputTaskIds);
         return taskDescription;

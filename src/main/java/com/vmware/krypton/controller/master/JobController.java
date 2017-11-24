@@ -6,6 +6,7 @@ import com.vmware.xenon.ext.jee.provider.JaxRsBridgeStatelessService;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -28,10 +29,26 @@ public class JobController extends JaxRsBridgeStatelessService{
     private JobManager jobManager;
 
     @POST
-    @Path("/map_reduce")
-    public CompletableFuture<Object> executeMapReduce(JobDescription jobDescription) {
-        jobManager.executeJob(jobDescription);
-        return CompletableFuture.completedFuture("Job Successfully Submitted");
+    @Path("/map-reduce/async")
+    public CompletableFuture<JobResult> executeMapReduceAsync(JobDescription jobDescription) {
+        return jobManager.executeJob(jobDescription);
     }
 
+    @POST
+    @Path("/map-reduce")
+    public CompletableFuture<JobResult> executeMapReduce(JobDescription jobDescription) {
+        return jobManager.executeJobAndWait(jobDescription);
+    }
+
+    @POST
+    @Path("/internal/save-result")
+    public CompletableFuture<Void> postJobResult(JobResult jobResult) {
+        return jobManager.saveJobResult(jobResult);
+    }
+
+    @GET
+    @Path("/result")
+    public CompletableFuture<JobResult> getJobResult(String jobId) {
+        return jobManager.getJobResult(jobId);
+    }
 }
