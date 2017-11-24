@@ -10,6 +10,7 @@ import com.vmware.xenon.common.ServiceHost;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -55,8 +56,8 @@ public class JobManagerImpl implements JobManager {
 
     @Override
     public CompletableFuture<Object> sendNodeTasksSchedule(WorkerTaskSchedule workerTaskSchedule) {
-        String workerNodeURL = workerTaskSchedule.getHostname() + SELF_LINK + TASK_SCHEDULE;
-        Operation op = Operation.createPost(host, workerNodeURL)
+        URI workerNodeURL = URI.create(workerTaskSchedule.getHostname() + SELF_LINK + TASK_SCHEDULE);
+        Operation op = Operation.createPost(workerNodeURL)
                 .setBody(workerTaskSchedule);
         log.info("Sending the task[{}] to Worker-Node:{}", workerTaskSchedule.getTaskDescriptions(), workerNodeURL);
         return sendOperation(host, op, null);

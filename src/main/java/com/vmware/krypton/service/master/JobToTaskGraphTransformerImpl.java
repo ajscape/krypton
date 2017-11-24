@@ -39,7 +39,7 @@ public class JobToTaskGraphTransformerImpl implements JobToTaskGraphTransformer 
 
         IntStream.rangeClosed(dag.size() + 1, getNumberOfNodes() + dag.size())
                 .forEach(taskIdInt -> dag.addNode(new TaskDescription(Objects.toString(taskIdInt), ReducerTask.class.getName())));
-        List<TaskDescription> reducerTasks = dag.getNodesByName(ReducerTask.class.getSimpleName());
+        List<TaskDescription> reducerTasks = dag.getNodesByName(ReducerTask.class.getName());
         mapperTasks.forEach(mapperTask -> dag.addEdge(mapperTask.getTaskId(), reducerTasks));
 
         TaskDescription combinerTask = new TaskDescription(Objects.toString(dag.size() + 1), Combiner.class.getName());

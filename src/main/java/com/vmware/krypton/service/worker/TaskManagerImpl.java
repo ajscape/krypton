@@ -53,6 +53,7 @@ public class TaskManagerImpl implements TaskManager {
 
     @Override
     public CompletableFuture<Void> receiveWorkerTaskSchedule(WorkerTaskSchedule schedule) {
+        logger.info("Received task schedule - {}", schedule.getTaskDescriptions());
         taskIdToHostnameMap.putAll(schedule.getTaskIdToHostnameMap());
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();

@@ -6,6 +6,7 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.services.common.NodeGroupService;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -24,9 +25,10 @@ public class WorkerStatusService {
     }
 
     private Map<String,String> parseAndGetWorkerMap(NodeGroupService.NodeGroupState nodeGroupState) {
-        Map<String,String> workerMap = new HashMap<>();
+        Map<String, String> workerMap = new HashMap<>();
         nodeGroupState.nodes.forEach((workerId, nodeState) -> {
-            workerMap.put(workerId, nodeState.groupReference.getHost() + ":" + nodeState.groupReference.getPort());
+            workerMap.put(workerId, nodeState.groupReference.getScheme() + "://" + nodeState.groupReference.getHost() + ":" +
+                    + nodeState.groupReference.getPort());
         });
         return workerMap;
     }
