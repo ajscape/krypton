@@ -26,6 +26,13 @@ public class TaskContext<I, O> {
                 .collect(Collectors.toList());
     }
 
+    public <T> List<T> getInput(Class<T> clazz) {
+        return (List<T>) inputTaskIdToDataMap.entrySet().stream()
+                .filter(entry -> inputTaskIdToCompletionMap.get(entry.getKey()) == null)
+                .map(entry -> Utils.fromJson(entry.getValue(), clazz))
+                .collect(Collectors.toList());
+    }
+
     public void emitOutput(String outputTaskId, O output) {
         WorkerTaskData taskOutput = new WorkerTaskData();
         taskOutput.setJobId(taskDescription.getJobId());

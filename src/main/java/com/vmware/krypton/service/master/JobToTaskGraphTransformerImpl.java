@@ -5,7 +5,7 @@ import com.vmware.krypton.model.TaskDescription;
 import com.vmware.krypton.model.TaskGraph;
 import com.vmware.krypton.service.mappers.basic.DefaultMapper;
 import com.vmware.krypton.service.tasks.Combiner;
-import com.vmware.krypton.service.tasks.InputQueryTask;
+import com.vmware.krypton.service.tasks.OdataQueryTask;
 import com.vmware.krypton.service.tasks.ReducerTask;
 import com.vmware.krypton.service.tasks.SplitterTask;
 
@@ -16,25 +16,24 @@ import java.util.stream.IntStream;
 
 import static com.vmware.krypton.util.XenonUtil.getNumberOfNodes;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 /**
  * Created by nibunangs on 23-Nov-2017.
  */
 public class JobToTaskGraphTransformerImpl implements JobToTaskGraphTransformer {
-    public static final String MASTER_TASK_ID = "T0";
+    public static final String MASTER_TASK_ID = "MASTER";
 
     @Override
     public TaskGraph transformJobToTaskGraph(JobDescription jobDescription) {
-        //return createMapReduceTaskGraph(jobDescription);
-        return createHelloWorldTaskGraph(jobDescription);
+        return createMapReduceTaskGraph(jobDescription);
+//        return createHelloWorldTaskGraph(jobDescription);
     }
 
     public TaskGraph createMapReduceTaskGraph(JobDescription jobDescription) {
         String jobId = jobDescription.getJobId();
         TaskGraph dag = new TaskGraph();
-        TaskDescription queryTask = new TaskDescription(jobId, "1", InputQueryTask.class.getName());
+        TaskDescription queryTask = new TaskDescription(jobId, "1", OdataQueryTask.class.getName());
         queryTask.addInputTaskId(MASTER_TASK_ID);
         dag.addNode(queryTask);
 

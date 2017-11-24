@@ -1,5 +1,6 @@
 package com.vmware.krypton.service.worker;
 
+import static com.vmware.krypton.controller.master.JobController.WORKER_SAVE_RESULT;
 import static com.vmware.krypton.service.master.JobToTaskGraphTransformerImpl.MASTER_TASK_ID;
 import static com.vmware.krypton.util.XenonUtil.sendOperation;
 
@@ -15,6 +16,7 @@ import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.vmware.krypton.controller.master.JobController;
 import com.vmware.krypton.controller.master.JobResult;
 import com.vmware.krypton.document.worker.TaskDoc;
 import com.vmware.krypton.model.Task;
@@ -23,12 +25,11 @@ import com.vmware.krypton.model.TaskDescription;
 import com.vmware.krypton.model.TaskState;
 import com.vmware.krypton.model.WorkerTaskData;
 import com.vmware.krypton.model.WorkerTaskSchedule;
-import com.vmware.krypton.repository.worker.JobDocRepository;
 import com.vmware.krypton.repository.worker.TaskDocRepository;
 import com.vmware.krypton.service.mappers.basic.DefaultMapper;
 import com.vmware.krypton.service.tasks.Combiner;
 import com.vmware.krypton.service.tasks.HelloWorldTask;
-import com.vmware.krypton.service.tasks.InputQueryTask;
+import com.vmware.krypton.service.tasks.OdataQueryTask;
 import com.vmware.krypton.service.tasks.ReducerTask;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
@@ -47,7 +48,7 @@ public class TaskManagerImpl implements TaskManager {
     private Map<String, Task> taskNameToTaskMap = new HashMap<>();
 
     public TaskManagerImpl() {
-        taskNameToTaskMap.put(InputQueryTask.class.getName(), new InputQueryTask());
+        taskNameToTaskMap.put(OdataQueryTask.class.getName(), new OdataQueryTask());
         taskNameToTaskMap.put(DefaultMapper.class.getName(), new DefaultMapper());
         taskNameToTaskMap.put(ReducerTask.class.getName(), new ReducerTask());
         taskNameToTaskMap.put(Combiner.class.getName(), new Combiner());
@@ -190,7 +191,7 @@ public class TaskManagerImpl implements TaskManager {
     }
 
     private CompletableFuture<Void> sendJobResult(JobResult jobResult) {
-        Operation op = Operation.createPatch(host, JobDocRepository.FACTORY_LINK + "/" + jobResult.getJobId())
+        Operation op = Operation.createPost(host, JobController.SELF_LINK + WORKER_SAVE_RESULT)
                 .setBody(jobResult);
         return sendOperation(host, op, null);
     }

@@ -3,6 +3,7 @@ package com.vmware.krypton.service.tasks;
 import com.vmware.krypton.model.Task;
 import com.vmware.krypton.model.TaskContext;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.ext.jee.query.XenonQueryService;
 import com.vmware.xenon.services.common.QueryTask;
@@ -15,20 +16,18 @@ import java.util.List;
 /**
  * Created by nibunangs on 23-Nov-2017.
  */
-public class InputQueryTask implements Task {
+public class OdataQueryTask implements Task<String, Collection<Object>> {
 
     @Override
-    public void execute(TaskContext taskContext) {
+    public void execute(TaskContext<String, Collection<Object>> taskContext) {
 
-        List<QueryTask> input = taskContext.getInput(QueryTask.class);
+        String odataQuery = taskContext.getInput(String.class).get(0);
         List<String> outputTaksIds = new ArrayList<String>(taskContext.getTaskDescription().getOutputTaskIds());
 
-        QueryTask queryTask = input.get(0);
 
-        Operation post = Operation.createPost(taskContext.getTaskManager().getHost(), "/core/query-tasks")
-            .setBody(queryTask)
+        Operation post = Operation.createGet(taskContext.getTaskManager().getHost(), "/core/odata-queries?" + odataQuery)
             .setCompletion((o, e) -> {
-              com.vmware.xenon.services.common.QueryTask rsp = o.getBody(com.vmware.xenon.services.common.QueryTask.class);
+              QueryTask rsp = o.getBody(com.vmware.xenon.services.common.QueryTask.class);
                     taskContext.emitOutput(outputTaksIds.get(0), rsp.results.documents.values());
                 });
 
