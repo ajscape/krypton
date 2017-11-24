@@ -1,6 +1,7 @@
 package com.vmware.krypton.model;
 
 import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Getter
+@ToString
 public class TaskGraph {
 
     private Map<String, TaskDescription> nodes = new ConcurrentHashMap<>();

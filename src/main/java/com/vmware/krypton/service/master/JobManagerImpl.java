@@ -7,6 +7,7 @@ import com.vmware.krypton.model.TaskState;
 import com.vmware.krypton.model.WorkerTaskSchedule;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -21,6 +22,7 @@ import static com.vmware.krypton.util.XenonUtil.sendOperation;
 /**
  * Created by nibunangs on 23-Nov-2017.
  */
+@Slf4j
 public class JobManagerImpl implements JobManager {
 
     @Inject
@@ -34,10 +36,13 @@ public class JobManagerImpl implements JobManager {
 
     @Override
     public void executeJob(JobDescription job) {
+        log.info("Going to create a DAG for {}", job);
         TaskGraph taskGraph = transformer.transformJobToTaskGraph(job);
+        log.info("Task Graph[{}] has been created for {}", taskGraph, job);
         CompletableFuture<List<WorkerTaskSchedule>> workerSchedulesCF = generator.generateWorkerTaskSchedules(taskGraph);
         workerSchedulesCF.thenCompose(workerTaskSchedules -> {
-            List<CompletableFuture<Object>> scheduledTaskCFs = workerTaskSchedules.stream().map(this::sendNodeTasksScedule)
+            log.info("Got the worker schedules {}", workerTaskSchedules);
+            List<CompletableFuture<Object>> scheduledTaskCFs = workerTaskSchedules.stream().map(this::sendNodeTasksSchedule)
                     .collect(Collectors.toList());
             return CompletableFutures.allAsList(scheduledTaskCFs);
         });
@@ -49,12 +54,12 @@ public class JobManagerImpl implements JobManager {
     }
 
     @Override
-    public CompletableFuture<Object> sendNodeTasksScedule(WorkerTaskSchedule workerTaskSchedule) {
+    public CompletableFuture<Object> sendNodeTasksSchedule(WorkerTaskSchedule workerTaskSchedule) {
         String workerNodeId = workerTaskSchedule.getWorkerIdToHostnameMap().get(workerTaskSchedule.getWorkerId());
         String workerNodeURL = workerNodeId + SELF_LINK + TASK_SCHEDULE;
         Operation op = Operation.createPost(host, workerNodeURL)
                 .setBody(workerTaskSchedule);
+        log.info("Sending the task[{}] to Worker-Node:{}", workerTaskSchedule.getTaskDescriptions(), workerNodeURL);
         return sendOperation(host, op, null);
-
     }
 }

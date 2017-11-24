@@ -22,7 +22,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 @Produces(APPLICATION_JSON)
 public class JobController extends JaxRsBridgeStatelessService{
 
-    public static final String SELF_LINK = "/krypton/mapreduce";
+    public static final String SELF_LINK = "/krypton/job";
 
     @Inject
     private JobManager jobManager;

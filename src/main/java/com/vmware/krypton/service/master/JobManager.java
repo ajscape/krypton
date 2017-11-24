@@ -12,5 +12,5 @@ public interface JobManager {
 
     Map<String, TaskState> pollWorkerTaskState(String nodeId);
 
-    CompletableFuture<Object> sendNodeTasksScedule(WorkerTaskSchedule workerTaskSchedule);
+    CompletableFuture<Object> sendNodeTasksSchedule(WorkerTaskSchedule workerTaskSchedule);
 }

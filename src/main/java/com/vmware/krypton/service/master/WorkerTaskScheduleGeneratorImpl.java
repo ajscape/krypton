@@ -69,7 +69,7 @@ public class WorkerTaskScheduleGeneratorImpl implements WorkerTaskScheduleGenera
     private void updateTaskToWorker(WorkerTaskSchedule taskSchedule, Map.Entry<String, TaskDescription> taskMap) {
         List<TaskDescription> taskDescriptionList = taskSchedule.getTaskDescriptions();
         taskDescriptionList.add(taskMap.getValue());
-        taskSchedule.setTaskDescriptions(taskDescriptionList);
+
         Map<String, String> taskIdMap = taskSchedule.getTaskIdToWorkerIdMap();
         taskIdMap.put(taskMap.getKey(), taskSchedule.getWorkerId());
         taskSchedule.setTaskIdToWorkerIdMap(taskIdMap);
