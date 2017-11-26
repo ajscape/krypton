@@ -36,6 +36,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
 
 public class TaskManagerImpl implements TaskManager {
 
@@ -74,6 +75,10 @@ public class TaskManagerImpl implements TaskManager {
     public CompletableFuture<Void> receiveTaskInput(WorkerTaskData taskInput) {
         synchronized (TaskManagerImpl.class) {
             getTaskDoc(taskInput.getDstTaskId()).thenCompose(taskDoc -> {
+                if(taskDoc == null) {
+                    logger.error("Dst Task {} not found", taskInput.getDstTaskId());
+                    return CompletableFuture.completedFuture(null);
+                }
                 String inputData = taskInput.getData();
                 if (taskInput.isSrcTaskCompleted()) {
                     taskDoc.inputTaskIdToCompletionMap.put(taskInput.getSrcTaskId(), true);
@@ -104,7 +109,7 @@ public class TaskManagerImpl implements TaskManager {
     }
 
     @Override
-    public CompletableFuture<Void> sendTaskOutput(WorkerTaskData taskOutput) {
+    public synchronized CompletableFuture<Void> sendTaskOutput(WorkerTaskData taskOutput) {
         if(taskOutput.isSrcTaskCompleted()) {
             logger.info("Task {}: Sending completionEvent to {}", taskOutput.getSrcTaskId(), taskOutput.getDstTaskId());
         } else {
@@ -154,6 +159,22 @@ public class TaskManagerImpl implements TaskManager {
     }
 
     @Override
+    public CompletableFuture<Void> deleteJobTasks(String jobId) {
+        Operation get = Operation.createGet(host, TaskDocRepository.FACTORY_LINK + "?expand");
+        sendOperation(host, get, ServiceDocumentQueryResult.class).thenAccept(result -> {
+            result.documents.forEach((selfLink, doc) -> {
+                TaskDoc taskDoc = Utils.fromJson(doc, TaskDoc.class);
+                if(taskDoc.jobId.equals(jobId)) {
+                    Operation del = Operation.createDelete(host, selfLink);
+                    sendOperation(host, del, null);
+                    logger.info("Task {}: Deleted", taskDoc.taskId);
+                }
+            });
+        });
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Override
     public ServiceHost getHost() {
         return host;
     }
@@ -196,7 +217,8 @@ public class TaskManagerImpl implements TaskManager {
     }
 
     private CompletableFuture<Void> sendJobResult(JobResult jobResult) {
-        Operation op = Operation.createPost(host, JobController.SELF_LINK + WORKER_SAVE_RESULT)
+        URI uri = URI.create("http://localhost:8000" + JobController.SELF_LINK + WORKER_SAVE_RESULT);
+        Operation op = Operation.createPost(uri)
                 .setBody(jobResult);
         return sendOperation(host, op, null);
     }

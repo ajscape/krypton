@@ -35,11 +35,6 @@ public class TaskGraph {
         destNodes.forEach(destTaskDes -> destTaskDes.addInputTaskId(sourceNodeId));
     }
 
-    public void addDirectedEdge(String sourceNodeId, List<String> destNodeIds) {
-        TaskDescription sourceTask = nodes.get(sourceNodeId);
-        sourceTask.addOutputTaskIds(destNodeIds);
-    }
-
     public int size() {
         return nodes.size();
     }

@@ -21,4 +21,9 @@ import lombok.Setter;
 public class DefaultInput extends MapInput {
   List<TestState> documents;
   private List<String> extractDataMembers;
+
+  @Override
+  public String toString() {
+    return "documentCount=" + documents.size();
+  }
 }

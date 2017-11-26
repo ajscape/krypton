@@ -17,15 +17,18 @@ import java.util.stream.IntStream;
 import static com.vmware.krypton.util.XenonUtil.getNumberOfNodes;
 
 import com.google.common.collect.Sets;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Created by nibunangs on 23-Nov-2017.
  */
+@Slf4j
 public class JobToTaskGraphTransformerImpl implements JobToTaskGraphTransformer {
     public static final String MASTER_TASK_ID = "MASTER";
 
     @Override
     public TaskGraph transformJobToTaskGraph(JobDescription jobDescription) {
+        log.info("Creating task graph for job {}", jobDescription.getJobId());
         return createMapReduceTaskGraph(jobDescription);
 //        return createHelloWorldTaskGraph(jobDescription);
     }

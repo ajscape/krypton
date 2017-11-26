@@ -19,5 +19,7 @@ public interface TaskManager {
 
     CompletableFuture<Void> updateTaskState(String taskId, TaskState taskState);
 
+    CompletableFuture<Void> deleteJobTasks(String jobId);
+
     ServiceHost getHost();
 }

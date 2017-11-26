@@ -17,6 +17,8 @@ public class TestService extends StatefulService {
     public TestService() {
         super(TestState.class);
         toggleOption(ServiceOption.PERSISTENCE, true);
+        toggleOption(ServiceOption.REPLICATION, true);
+        toggleOption(ServiceOption.OWNER_SELECTION, true);
     }
 
     @Override

@@ -21,10 +21,16 @@ public class WorkerStatusService {
     public CompletableFuture<Map<String, String>> getWorkerToNodeMap(ServiceHost host) {
         Operation operation = Operation.createGet(host, "/core/node-groups/default?expand");
         return XenonUtil.sendOperation(host, operation, NodeGroupService.NodeGroupState.class)
-                .thenApply(this::parseAndGetWorkerMap);
+                .thenApply(WorkerStatusService::parseAndGetWorkerMap);
     }
 
-    private Map<String,String> parseAndGetWorkerMap(NodeGroupService.NodeGroupState nodeGroupState) {
+    public static Map<String, String> getWorkerToHostnameMap(ServiceHost host) {
+        Operation operation = Operation.createGet(host, "/core/node-groups/default?expand");
+        return XenonUtil.sendOperation(host, operation, NodeGroupService.NodeGroupState.class)
+                .thenApply(WorkerStatusService::parseAndGetWorkerMap).join();
+    }
+
+    private static Map<String,String> parseAndGetWorkerMap(NodeGroupService.NodeGroupState nodeGroupState) {
         Map<String, String> workerMap = new HashMap<>();
         nodeGroupState.nodes.forEach((workerId, nodeState) -> {
             workerMap.put(workerId, nodeState.groupReference.getScheme() + "://" + nodeState.groupReference.getHost() + ":" +
