@@ -124,10 +124,10 @@ public class JobManagerImpl implements JobManager {
             if(future != null) {
                 future.complete(jobResult);
             }
-//            deleteJobTasks(jobResult.getJobId()).thenCompose(aVoid1 -> {
-//                Operation delJob = Operation.createDelete(host, JobDocRepository.FACTORY_LINK + "/" + jobResult.getJobId());
-//                return sendOperation(host, delJob, null);
-//            });
+            deleteJobTasks(jobResult.getJobId()).thenCompose(aVoid1 -> {
+                Operation delJob = Operation.createDelete(host, JobDocRepository.FACTORY_LINK + "/" + jobResult.getJobId());
+                return sendOperation(host, delJob, null);
+            });
             return CompletableFuture.completedFuture(null);
         });
     }

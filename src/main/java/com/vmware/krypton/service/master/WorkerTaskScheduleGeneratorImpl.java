@@ -62,23 +62,24 @@ public class WorkerTaskScheduleGeneratorImpl implements WorkerTaskScheduleGenera
         Map<String, String> taskIdToHostnameMap = new HashMap<>();
         taskIdToHostnameMap.put("1", "http://localhost:8000");
         taskIdToHostnameMap.put("2", "http://localhost:8000");
-        taskIdToHostnameMap.put("3", "http://localhost:8000");
-        taskIdToHostnameMap.put("4", "http://localhost:8001");
-        taskIdToHostnameMap.put("5", "http://localhost:8000");
-        taskIdToHostnameMap.put("6", "http://localhost:8001");
+        taskIdToHostnameMap.put("3", "http://localhost:8001");
+        taskIdToHostnameMap.put("4", "http://localhost:8000");
+        taskIdToHostnameMap.put("5", "http://localhost:8001");
+        taskIdToHostnameMap.put("6", "http://localhost:8000");
         taskIdToHostnameMap.put("7", "http://localhost:8001");
+        taskIdToHostnameMap.put("8", "http://localhost:8001");
 
         Map<String, TaskDescription> nodes = taskGraph.getNodes();
 
         WorkerTaskSchedule schedule1 = new WorkerTaskSchedule();
         schedule1.setHostname("http://localhost:8000");
         schedule1.setTaskIdToHostnameMap(taskIdToHostnameMap);
-        schedule1.setTaskDescriptions(Lists.newArrayList(nodes.get("1"), nodes.get("2"), nodes.get("3"), nodes.get("5")));
+        schedule1.setTaskDescriptions(Lists.newArrayList(nodes.get("1"), nodes.get("2"), nodes.get("4"), nodes.get("6")));
 
         WorkerTaskSchedule schedule2 = new WorkerTaskSchedule();
         schedule2.setHostname("http://localhost:8001");
         schedule2.setTaskIdToHostnameMap(taskIdToHostnameMap);
-        schedule2.setTaskDescriptions(Lists.newArrayList(nodes.get("4"), nodes.get("6"), nodes.get("7")));
+        schedule2.setTaskDescriptions(Lists.newArrayList(nodes.get("3"), nodes.get("5"), nodes.get("7"), nodes.get("8")));
 
         workerTaskSchedules.add(schedule1);
         workerTaskSchedules.add(schedule2);

@@ -28,8 +28,10 @@ import com.vmware.krypton.model.WorkerTaskSchedule;
 import com.vmware.krypton.repository.worker.TaskDocRepository;
 import com.vmware.krypton.service.mappers.basic.MapperTask;
 import com.vmware.krypton.service.tasks.Combiner;
+import com.vmware.krypton.service.tasks.DocumentReader;
 import com.vmware.krypton.service.tasks.HelloWorldTask;
 import com.vmware.krypton.service.tasks.OdataQueryTask;
+import com.vmware.krypton.service.tasks.QueryTaskCreator;
 import com.vmware.krypton.service.tasks.ReducerTask;
 import com.vmware.krypton.service.tasks.SplitterTask;
 import com.vmware.xenon.common.Operation;
@@ -51,6 +53,8 @@ public class TaskManagerImpl implements TaskManager {
 
     public TaskManagerImpl() {
         taskNameToTaskMap.put(OdataQueryTask.class.getName(), new OdataQueryTask());
+        taskNameToTaskMap.put(QueryTaskCreator.class.getName(), new QueryTaskCreator());
+        taskNameToTaskMap.put(DocumentReader.class.getName(), new DocumentReader());
         taskNameToTaskMap.put(SplitterTask.class.getName(), new SplitterTask());
         taskNameToTaskMap.put(MapperTask.class.getName(), new MapperTask());
         taskNameToTaskMap.put(ReducerTask.class.getName(), new ReducerTask());
